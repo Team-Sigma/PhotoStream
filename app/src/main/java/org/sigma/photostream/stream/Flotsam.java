@@ -3,7 +3,7 @@ package org.sigma.photostream.stream;
 import android.graphics.Bitmap;
 
 /**
- * Created by mattress on 2/14/2016.
+ * @author Tobias Highfill
  */
 public class Flotsam {
     private final Bitmap img;
@@ -12,5 +12,15 @@ public class Flotsam {
 
     public Flotsam(Bitmap img){
         this.img = img;
+    }
+
+    public Flotsam(Bitmap img, String name){
+        this(img);
+        this.name = name;
+    }
+
+    public Flotsam(Bitmap img, String name, String description){
+        this(img, name);
+        this.description = description;
     }
 }
