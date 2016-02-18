@@ -40,6 +40,14 @@ public class TwitterStream extends TembooStream {
     private List<Flotsam> images = new LinkedList<>();
     private volatile List<Flotsam> buffer = new LinkedList<>();
 
+    public TwitterStream(Integer id){
+        super(id);
+    }
+
+    public TwitterStream(){
+        this(null);
+    }
+
     private void fetchMore(){
         new TwitterFetcher(this).execute(query.buildQuery());
     }

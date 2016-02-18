@@ -1,22 +1,30 @@
 package org.sigma.photostream.stream;
 
+import org.sigma.photostream.data.Identifiable;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Tobias Highfill
  */
-public abstract class Stream {
+public abstract class Stream implements Identifiable{
 
     public static final int NORMAL = 0;
     public static final int FETCHING = 1;
     public static final int WAITING_FOR_RESET = 2;
     public static final int DOWNLOADING_IMAGES = 3;
 
+    private final Integer id;
+
     private int status = NORMAL;
     private int downloadThreads = 0;
 
     private List<OnUpdateListener> onUpdateListeners = new ArrayList<>();
+
+    public Stream(Integer id){
+        this.id = id;
+    }
 
     /**
      * Discard all images and restart
@@ -81,5 +89,10 @@ public abstract class Stream {
 
     public interface OnUpdateListener{
         void onUpdate(Stream stream, Flotsam img);
+    }
+
+    @Override
+    public Integer getID() {
+        return id;
     }
 }

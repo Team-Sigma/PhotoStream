@@ -1,5 +1,7 @@
 package org.sigma.photostream.stream;
 
+import org.sigma.photostream.data.Identifiable;
+
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
@@ -8,7 +10,7 @@ import java.util.List;
 /**
  * @author Tobias Highfill
  */
-public class TwitterQuery {
+public class TwitterQuery implements Identifiable{
     public String fromUser = null;
     public String fromList = null;
     public boolean question = false;
@@ -18,6 +20,16 @@ public class TwitterQuery {
     public List<String> exactPhrases = new LinkedList<>();
     public List<String> remove = new LinkedList<>();
     public List<String> hashtags = new LinkedList<>();
+
+    private final Integer id;
+
+    public TwitterQuery(Integer id){
+        this.id = id;
+    }
+
+    public TwitterQuery(){
+        this(null);
+    }
 
     private static String ISOformat(Date d){
         Calendar cal = Calendar.getInstance();
@@ -60,5 +72,10 @@ public class TwitterQuery {
             res.append('#').append(hashtag).append(' ');
         }
         return res.toString().trim();
+    }
+
+    @Override
+    public Integer getID() {
+        return id;
     }
 }
