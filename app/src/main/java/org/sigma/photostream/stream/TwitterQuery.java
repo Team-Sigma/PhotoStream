@@ -1,6 +1,9 @@
 package org.sigma.photostream.stream;
 
+import org.sigma.photostream.data.DBManagerNotInitializedException;
+import org.sigma.photostream.data.DatabaseManager;
 import org.sigma.photostream.data.Identifiable;
+import org.sigma.photostream.util.Converter;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -11,6 +14,12 @@ import java.util.List;
  * @author Tobias Highfill
  */
 public class TwitterQuery implements Identifiable{
+
+    private static long generateID(){
+        DatabaseManager dbm = DatabaseManager.getInstance();
+        return dbm.save((TwitterQuery) null);
+    }
+
     public String fromUser = null;
     public String fromList = null;
     public boolean question = false;
@@ -21,14 +30,16 @@ public class TwitterQuery implements Identifiable{
     public List<String> remove = new LinkedList<>();
     public List<String> hashtags = new LinkedList<>();
 
-    private final Integer id;
+    private final long id;
 
-    public TwitterQuery(Integer id){
+    public TwitterQuery(long id){
         this.id = id;
     }
 
     public TwitterQuery(){
-        this(null);
+        this(generateID());
+        //Save the defaults as they are
+        DatabaseManager.getInstance().save(this);
     }
 
     private static String ISOformat(Date d){
@@ -75,7 +86,7 @@ public class TwitterQuery implements Identifiable{
     }
 
     @Override
-    public Integer getID() {
+    public long getID() {
         return id;
     }
 }

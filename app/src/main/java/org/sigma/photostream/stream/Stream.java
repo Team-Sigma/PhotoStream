@@ -15,14 +15,14 @@ public abstract class Stream implements Identifiable{
     public static final int WAITING_FOR_RESET = 2;
     public static final int DOWNLOADING_IMAGES = 3;
 
-    private final Integer id;
+    private final long id;
 
     private int status = NORMAL;
     private int downloadThreads = 0;
 
     private List<OnUpdateListener> onUpdateListeners = new ArrayList<>();
 
-    public Stream(Integer id){
+    public Stream(long id){
         this.id = id;
     }
 
@@ -92,7 +92,7 @@ public abstract class Stream implements Identifiable{
     }
 
     @Override
-    public Integer getID() {
+    public long getID() {
         return id;
     }
 }

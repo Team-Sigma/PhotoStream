@@ -1,13 +1,15 @@
 package org.sigma.photostream.util;
 
 /**
- * Created by mattress on 2/18/2016.
+ * A neat little utility interface to convert things
+ *
+ * @author Tobias Highfill
  */
 public interface Converter<F,T> {
     /**
      * Converts the input into the output type
-     * @param src
-     * @return
+     * @param src The original object
+     * @return The output object
      */
     T convert(F src);
 }

@@ -10,7 +10,7 @@ import com.temboo.core.TembooSession;
 public abstract class TembooStream extends Stream{
     private static TembooSession session = null;
 
-    public TembooStream(Integer id) {
+    public TembooStream(long id) {
         super(id);
     }
 

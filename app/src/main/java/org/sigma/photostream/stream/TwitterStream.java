@@ -8,6 +8,8 @@ import com.temboo.core.TembooException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.sigma.photostream.data.DBManagerNotInitializedException;
+import org.sigma.photostream.data.DatabaseManager;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -27,12 +29,17 @@ public class TwitterStream extends TembooStream {
 
     private static final int LOW_BUFFER = 10;
 
+    private static long generateID(){
+        DatabaseManager dbm = DatabaseManager.getInstance();
+        return dbm.save((TwitterStream) null);
+    }
+
     public int tweetBatchSize = 30;
 
     public boolean doGeocode = false;
     private int geocodeRadius = 1;
 
-    public TwitterQuery query = new TwitterQuery();
+    public TwitterQuery query;
 
     private int remaining = 100;
     private long resetAt = 0;
@@ -40,12 +47,23 @@ public class TwitterStream extends TembooStream {
     private List<Flotsam> images = new LinkedList<>();
     private volatile List<Flotsam> buffer = new LinkedList<>();
 
-    public TwitterStream(Integer id){
+    public TwitterStream(long id, TwitterQuery query){
         super(id);
+        this.query = query;
+    }
+
+    public TwitterStream(long id){
+        this(id, new TwitterQuery());
+    }
+
+    public TwitterStream(TwitterQuery query){
+        this(generateID(), query);
+        //Save right now to update the DB
+        DatabaseManager.getInstance().save(this);
     }
 
     public TwitterStream(){
-        this(null);
+        this(new TwitterQuery());
     }
 
     private void fetchMore(){
