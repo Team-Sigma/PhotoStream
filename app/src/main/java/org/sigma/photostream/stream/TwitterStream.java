@@ -1,5 +1,6 @@
 package org.sigma.photostream.stream;
 
+import android.content.ContentValues;
 import android.os.AsyncTask;
 
 import com.temboo.Library.Twitter.Search.Tweets;
@@ -120,6 +121,27 @@ public class TwitterStream extends TembooStream {
             throw new IllegalArgumentException("Radius must be positive and non-zero!");
         }
         this.geocodeRadius = geocodeRadius;
+    }
+
+    @Override
+    public ContentValues toContentValues() {
+        ContentValues vals = new ContentValues();
+        vals.put(DatabaseManager.ID, getID());
+        vals.put(DatabaseManager.TS_TWEETBATCHSIZE, tweetBatchSize);
+        vals.put(DatabaseManager.TS_DOGEOCODE, doGeocode);
+        vals.put(DatabaseManager.TS_GEOCODERADIUS, getGeocodeRadius());
+        vals.put(DatabaseManager.TS_QUERY, query.getID());
+        return vals;
+    }
+
+    @Override
+    public String getTable() {
+        return DatabaseManager.TWITTER_STREAM;
+    }
+
+    @Override
+    public String nullColumn() {
+        return DatabaseManager.TS_GEOCODERADIUS;
     }
 
     public enum Attitude{

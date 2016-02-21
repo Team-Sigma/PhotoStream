@@ -71,22 +71,22 @@ public class DatabaseManager {
      */
     public static final String PRIMARY_KEY_DEF = "INTEGER PRIMARY KEY ASC ON CONFLICT FAIL AUTOINCREMENT";
 
-    private static final String ID = "id";
+    public static final String ID = "id";
 
     /**
      * The name of the table storing the Twitter Queries
      */
     public static final String TWITTER_QUERY = "TwitterQuery";
     //The column names
-    private static final String TQ_FROMUSER = "fromUser";
-    private static final String TQ_FROMLIST = "fromList";
-    private static final String TQ_QUESTION = "question";
-    private static final String TQ_SINCEDATE = "sinceDate";
-    private static final String TQ_UNTILDATE = "untilDate";
-    private static final String TQ_ATTITUDE = "attitude";
-    private static final String TQ_EXACTPHRASES = "exactPhrases";
-    private static final String TQ_REMOVE = "remove";
-    private static final String TQ_HASHTAGS = "hashtags";
+    public static final String TQ_FROMUSER = "fromUser";
+    public static final String TQ_FROMLIST = "fromList";
+    public static final String TQ_QUESTION = "question";
+    public static final String TQ_SINCEDATE = "sinceDate";
+    public static final String TQ_UNTILDATE = "untilDate";
+    public static final String TQ_ATTITUDE = "attitude";
+    public static final String TQ_EXACTPHRASES = "exactPhrases";
+    public static final String TQ_REMOVE = "remove";
+    public static final String TQ_HASHTAGS = "hashtags";
     //The creation query
     private static final String CREATE_TWITTER_QUERY = String.format(
             "CREATE TABLE IF NOT EXISTS %s (%s %s , %s TEXT, %s TEXT," +
@@ -109,10 +109,10 @@ public class DatabaseManager {
      */
     public static final String TWITTER_STREAM = "TwitterStream";
     //The column names
-    private static final String TS_TWEETBATCHSIZE = "tweetBatchSize";
-    private static final String TS_DOGEOCODE = "doGeocode";
-    private static final String TS_GEOCODERADIUS = "geocodeRadius";
-    private static final String TS_QUERY = "query";
+    public static final String TS_TWEETBATCHSIZE = "tweetBatchSize";
+    public static final String TS_DOGEOCODE = "doGeocode";
+    public static final String TS_GEOCODERADIUS = "geocodeRadius";
+    public static final String TS_QUERY = "query";
     //The creation query
     private static final String CREATE_TWITTER_STREAM = String.format(
             "CREATE TABLE IF NOT EXISTS %s (%s %s, %s INTEGER NOT NULL, %s INTEGER," +
@@ -162,26 +162,6 @@ public class DatabaseManager {
         }
     };
 
-    private static final Converter<TwitterQuery, ContentValues> TWITTER_QUERY_CONTENT_VALUES_CONVERTER = new Converter<TwitterQuery, ContentValues>() {
-        @Override
-        public ContentValues convert(TwitterQuery query) {
-            ContentValues vals = new ContentValues();
-            if(query != null) {
-                vals.put(ID, query.getID());
-                vals.put(TQ_FROMUSER, query.fromUser);
-                vals.put(TQ_FROMLIST, query.fromList);
-                vals.put(TQ_QUESTION, query.question);
-                vals.put(TQ_SINCEDATE, dateToString(query.sinceDate));
-                vals.put(TQ_UNTILDATE, dateToString(query.untilDate));
-                vals.put(TQ_ATTITUDE, query.attitude.name());
-                vals.put(TQ_EXACTPHRASES, toCSV(query.exactPhrases));
-                vals.put(TQ_REMOVE, toCSV(query.remove));
-                vals.put(TQ_HASHTAGS, toCSV(query.hashtags));
-            }
-            return vals;
-        }
-    };
-
     /**
      * Converter for TwitterStreams. Stored locally due to reliance on non-static methods
      */
@@ -210,26 +190,6 @@ public class DatabaseManager {
         }
     };
 
-    private boolean saveQuery = true; //Hacky workaround. Need to think of a better way
-    private final Converter<TwitterStream, ContentValues> TWITTER_STREAM_CONTENT_VALUES_CONVERTER = new Converter<TwitterStream, ContentValues>() {
-        @Override
-        public ContentValues convert(TwitterStream stream) {
-            ContentValues vals = new ContentValues();
-            if(stream != null) {
-                vals.put(ID, stream.getID());
-                vals.put(TS_TWEETBATCHSIZE, stream.tweetBatchSize);
-                vals.put(TS_DOGEOCODE, stream.doGeocode);
-                vals.put(TS_GEOCODERADIUS, stream.getGeocodeRadius());
-                long qID = stream.query.getID();
-                if(saveQuery){
-                    qID = save(stream.query);
-                }
-                vals.put(TS_QUERY, qID);
-            }
-            return vals;
-        }
-    };
-
     /**
      * Convenience method for extracting a boolean from a column
      * @param cur The Cursor pointing at the row
@@ -238,7 +198,7 @@ public class DatabaseManager {
      * @return If the column is NULL, the default is returned, otherwise returns true if the value
      *          is non-zero, false otherwise
      */
-    private static boolean getBoolean(Cursor cur, int column, boolean def){
+    public static boolean getBoolean(Cursor cur, int column, boolean def){
         if(cur.isNull(column)){
             return def;
         }
@@ -251,7 +211,7 @@ public class DatabaseManager {
      * @param column The column to extract from
      * @return null if the column is NULL, the text otherwise
      */
-    private static String getString(Cursor cur, int column){
+    public static String getString(Cursor cur, int column){
         return cur.isNull(column)?null:cur.getString(column);
     }
 
@@ -262,7 +222,7 @@ public class DatabaseManager {
      * @param csv The CSV source to parse
      * @return A List of strings from the source
      */
-    private static List<String> parseCSV(String csv){
+    public static List<String> parseCSV(String csv){
         if(csv == null){
             return null;
         }
@@ -312,7 +272,7 @@ public class DatabaseManager {
      * @param list The Strings to use
      * @return A CSV string of the listed strings
      */
-    private static String toCSV(List<String> list){
+    public static String toCSV(List<String> list){
         StringBuilder builder = new StringBuilder();
         boolean first = true;
         for(String s : list){
@@ -337,7 +297,7 @@ public class DatabaseManager {
      * @param date The string to parse
      * @return The Date object corresponding to that string
      */
-    private static Date parseDate(String date){
+    public static Date parseDate(String date){
         if(date != null) {
             try {
                 return DATE_FORMAT.parse(date);
@@ -353,7 +313,7 @@ public class DatabaseManager {
      * @param date The Date to convert
      * @return The String corresponding to that Date
      */
-    private static String dateToString(Date date){
+    public static String dateToString(Date date){
         if(date == null){
             return null;
         }
@@ -452,6 +412,24 @@ public class DatabaseManager {
         return insert(table, nullColumnHack, vals);
     }
 
+    /**
+     * Saves any savable object.
+     * @param obj The object to save
+     * @return The ID of the entry or -1 if there was an error
+     */
+    public long save(Savable obj){
+        final Converter<Savable,ContentValues> conv = new Converter<Savable, ContentValues>() {
+            @Override
+            public ContentValues convert(Savable src) {
+                if(src != null) {
+                    return src.toContentValues();
+                }
+                return new ContentValues();
+            }
+        };
+        return save(obj.getTable(), obj.nullColumn(), obj, conv);
+    }
+
     private Map<Long, TwitterQuery> twitterQueryMap = null;
 
     /**
@@ -483,7 +461,7 @@ public class DatabaseManager {
      * @return The ID of the entry or -1 if there was an error
      */
     public long save(TwitterQuery query){
-        long res = save(TWITTER_QUERY, TQ_ATTITUDE, query, TWITTER_QUERY_CONTENT_VALUES_CONVERTER);
+        long res = save((Savable) query);
         if(twitterQueryMap != null){
             twitterQueryMap.put(res, query);
         }
@@ -522,8 +500,10 @@ public class DatabaseManager {
      * @return The ID of the entry or -1 if there was an error
      */
     public long save(TwitterStream stream, boolean saveQuery){
-        this.saveQuery = saveQuery;
-        long res = save(TWITTER_STREAM, TS_DOGEOCODE, stream, TWITTER_STREAM_CONTENT_VALUES_CONVERTER);
+        if(saveQuery){
+            save(stream.query);
+        }
+        long res = save((Savable) stream);
         if(twitterStreamMap != null){
             twitterStreamMap.put(res, stream);
         }

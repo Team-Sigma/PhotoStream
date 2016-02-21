@@ -1,9 +1,9 @@
 package org.sigma.photostream.stream;
 
-import org.sigma.photostream.data.DBManagerNotInitializedException;
+import android.content.ContentValues;
+
 import org.sigma.photostream.data.DatabaseManager;
-import org.sigma.photostream.data.Identifiable;
-import org.sigma.photostream.util.Converter;
+import org.sigma.photostream.data.Savable;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author Tobias Highfill
  */
-public class TwitterQuery implements Identifiable{
+public class TwitterQuery implements Savable {
 
     private static long generateID(){
         DatabaseManager dbm = DatabaseManager.getInstance();
@@ -88,5 +88,31 @@ public class TwitterQuery implements Identifiable{
     @Override
     public long getID() {
         return id;
+    }
+
+    @Override
+    public ContentValues toContentValues() {
+        ContentValues vals = new ContentValues();
+        vals.put(DatabaseManager.ID, getID());
+        vals.put(DatabaseManager.TQ_FROMUSER, fromUser);
+        vals.put(DatabaseManager.TQ_FROMLIST, fromList);
+        vals.put(DatabaseManager.TQ_QUESTION, question);
+        vals.put(DatabaseManager.TQ_SINCEDATE, DatabaseManager.dateToString(sinceDate));
+        vals.put(DatabaseManager.TQ_UNTILDATE, DatabaseManager.dateToString(untilDate));
+        vals.put(DatabaseManager.TQ_ATTITUDE, attitude.name());
+        vals.put(DatabaseManager.TQ_EXACTPHRASES, DatabaseManager.toCSV(exactPhrases));
+        vals.put(DatabaseManager.TQ_REMOVE, DatabaseManager.toCSV(remove));
+        vals.put(DatabaseManager.TQ_HASHTAGS, DatabaseManager.toCSV(hashtags));
+        return vals;
+    }
+
+    @Override
+    public String getTable() {
+        return DatabaseManager.TWITTER_QUERY;
+    }
+
+    @Override
+    public String nullColumn() {
+        return DatabaseManager.TQ_ATTITUDE;
     }
 }

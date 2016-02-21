@@ -1,6 +1,6 @@
 package org.sigma.photostream.stream;
 
-import org.sigma.photostream.data.Identifiable;
+import org.sigma.photostream.data.Savable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * @author Tobias Highfill
  */
-public abstract class Stream implements Identifiable{
+public abstract class Stream implements Savable {
 
     public static final int NORMAL = 0;
     public static final int FETCHING = 1;
