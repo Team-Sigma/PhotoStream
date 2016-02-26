@@ -1,6 +1,7 @@
 package org.sigma.photostream.stream;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.os.AsyncTask;
 
 import com.temboo.Library.Twitter.Search.Tweets;
@@ -9,13 +10,11 @@ import com.temboo.core.TembooException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.sigma.photostream.data.DBManagerNotInitializedException;
+import org.sigma.photostream.MainActivity;
 import org.sigma.photostream.data.DatabaseManager;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -48,9 +47,27 @@ public class TwitterStream extends TembooStream {
     private List<Flotsam> images = new LinkedList<>();
     private volatile List<Flotsam> buffer = new LinkedList<>();
 
-    public TwitterStream(long id, TwitterQuery query){
-        super(id);
+    public TwitterStream(long id, Context context, TwitterQuery query){
+        super(id, context);
         this.query = query;
+    }
+
+    public TwitterStream(long id, Context context){
+        this(id, context, new TwitterQuery());
+    }
+
+    public TwitterStream(Context context, TwitterQuery query){
+        this(generateID(), context, query);
+        //Save right now to update the DB
+        DatabaseManager.getInstance().save(this);
+    }
+
+    public TwitterStream(Context context){
+        this(context, new TwitterQuery());
+    }
+
+    public TwitterStream(long id, TwitterQuery query){
+        this(id, MainActivity.mainActivity, query);
     }
 
     public TwitterStream(long id){
@@ -80,7 +97,7 @@ public class TwitterStream extends TembooStream {
 
     @Override
     public boolean hasMoreImages() {
-        return !buffer.isEmpty();
+        return true;
     }
 
     @Override
@@ -91,13 +108,17 @@ public class TwitterStream extends TembooStream {
     @Override
     public Flotsam next() {
         Flotsam res = null;
-        if(hasMoreImages()){
+        if(!buffer.isEmpty()){
             res = buffer.remove(0);
-            images.add(res);
         }
         if(buffer.size() <= LOW_BUFFER){
             fetchMore();
+            if(buffer.isEmpty()){
+                while (buffer.isEmpty()){}
+                res = buffer.remove(0);
+            }
         }
+        images.add(res);
         return res;
     }
 
@@ -107,7 +128,7 @@ public class TwitterStream extends TembooStream {
     }
 
     @Override
-    protected void receiveFlotsam(Flotsam img) {
+    protected void onReceiveFlotsam(Flotsam img) {
         buffer.add(img);
         this.sendUpdateToListeners(img);
     }
@@ -166,6 +187,8 @@ public class TwitterStream extends TembooStream {
                 parent.setStatus(WAITING_FOR_RESET);
                 while (System.currentTimeMillis() <= parent.resetAt){}
             }
+            System.out.println("Running Twitter query: \""+params[0]+'"');
+
             Tweets choreo = new Tweets(TembooStream.getSession());
             Tweets.TweetsInputSet inputs = choreo.newInputSet();
 
@@ -198,6 +221,7 @@ public class TwitterStream extends TembooStream {
             try {
                 JSONArray tweets = root.getJSONArray("statuses");
                 //This is a big array of tweets
+                System.out.println("Processing "+tweets.length()+" tweets...");
                 for(int i=0; i < tweets.length(); i++){
                     JSONObject tweet = tweets.getJSONObject(i);
                     String user = tweet.getJSONObject("user").getString("name");
@@ -209,8 +233,18 @@ public class TwitterStream extends TembooStream {
                         if(curr.getString("type").equals("photo")){
                             //Tweet has a photo, download it asynchronously
                             //Use tweet body as description
-                            new ImageDownloader(parent, "Tweet from " + user, tweet.getString("text"))
-                                    .execute(new URL(curr.getString("media_url_https")));
+                            String name = "Tweet from " + user;
+                            String description = tweet.getString("text");
+                            URL url = new URL(curr.getString("media_url_https"));
+                            Flotsam.ImageUpdateListener listener = new Flotsam.ImageUpdateListener() {
+                                @Override
+                                public void onImageUpdate(Flotsam flotsam) {
+                                    parent.endDLThread();
+                                }
+                            };
+                            parent.receiveFlotsam(new Flotsam(url, name, description, listener));
+                            parent.newDLThread();
+                            break;
                         }
                     }
                 }

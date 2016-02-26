@@ -430,6 +430,19 @@ public class DatabaseManager {
         return save(obj.getTable(), obj.nullColumn(), obj, conv);
     }
 
+    private <E> Converter<E, ContentValues> basicConverter(E e, final ContentValues retVals){
+        return new Converter<E, ContentValues>() {
+            @Override
+            public ContentValues convert(E src) {
+                return retVals;
+            }
+        };
+    }
+
+    private <E> Converter<E, ContentValues> basicConverter(E e){
+        return basicConverter(e, new ContentValues());
+    }
+
     private Map<Long, TwitterQuery> twitterQueryMap = null;
 
     /**
@@ -461,6 +474,9 @@ public class DatabaseManager {
      * @return The ID of the entry or -1 if there was an error
      */
     public long save(TwitterQuery query){
+        if(query == null){
+            return save(TWITTER_QUERY, TQ_ATTITUDE, null, basicConverter(query));
+        }
         long res = save((Savable) query);
         if(twitterQueryMap != null){
             twitterQueryMap.put(res, query);
@@ -500,6 +516,11 @@ public class DatabaseManager {
      * @return The ID of the entry or -1 if there was an error
      */
     public long save(TwitterStream stream, boolean saveQuery){
+        if(stream == null){
+            ContentValues vals = new ContentValues();
+            vals.put(TS_TWEETBATCHSIZE, 30);
+            return save(TWITTER_STREAM, TS_DOGEOCODE, null, basicConverter(stream, vals));
+        }
         if(saveQuery){
             save(stream.query);
         }

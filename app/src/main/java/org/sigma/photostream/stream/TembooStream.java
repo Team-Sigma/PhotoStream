@@ -1,5 +1,7 @@
 package org.sigma.photostream.stream;
 
+import android.content.Context;
+
 import com.temboo.core.Choreography;
 import com.temboo.core.TembooException;
 import com.temboo.core.TembooSession;
@@ -10,8 +12,8 @@ import com.temboo.core.TembooSession;
 public abstract class TembooStream extends Stream{
     private static TembooSession session = null;
 
-    public TembooStream(long id) {
-        super(id);
+    public TembooStream(long id, Context context) {
+        super(id, context);
     }
 
     protected static TembooSession getSession(){

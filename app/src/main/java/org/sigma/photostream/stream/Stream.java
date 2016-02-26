@@ -1,5 +1,16 @@
 package org.sigma.photostream.stream;
 
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListAdapter;
+import android.widget.ProgressBar;
+
+import org.sigma.photostream.R;
 import org.sigma.photostream.data.Savable;
 
 import java.util.ArrayList;
@@ -22,8 +33,11 @@ public abstract class Stream implements Savable {
 
     private List<OnUpdateListener> onUpdateListeners = new ArrayList<>();
 
-    public Stream(long id){
+    private final FlotsamAdapter adapter;
+
+    public Stream(long id, final Context context){
         this.id = id;
+        adapter = new FlotsamAdapter(context, R.layout.flotsam);
     }
 
     /**
@@ -55,10 +69,42 @@ public abstract class Stream implements Savable {
      */
     public abstract List<Flotsam> toList();
 
-    protected abstract void receiveFlotsam(Flotsam img);
+    protected abstract void onReceiveFlotsam(Flotsam img);
+
+    protected final void receiveFlotsam(Flotsam img){
+        adapter.add(img);
+        onReceiveFlotsam(img);
+    }
+
+    public List<Flotsam> getMany(int count){
+        List<Flotsam> res = new ArrayList<>(count);
+        for(int i=0; i<count && this.hasMoreImages(); i++){
+            res.add(next());
+        }
+        return res;
+    }
+
+    public void getUntilCountIs(int count){
+        while(this.count() < count && this.hasMoreImages()){
+            next();
+        }
+    }
+
+    public void getAsyncUntilCountIs(final int count){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                getUntilCountIs(count);
+            }
+        }).start();
+    }
 
     protected void setStatus(int status){
         this.status = status;
+    }
+
+    public FlotsamAdapter getFlotsamAdapter(){
+        return adapter;
     }
 
     public int getStatus(){

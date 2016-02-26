@@ -99,7 +99,7 @@ public class TwitterQuery implements Savable {
         vals.put(DatabaseManager.TQ_QUESTION, question);
         vals.put(DatabaseManager.TQ_SINCEDATE, DatabaseManager.dateToString(sinceDate));
         vals.put(DatabaseManager.TQ_UNTILDATE, DatabaseManager.dateToString(untilDate));
-        vals.put(DatabaseManager.TQ_ATTITUDE, attitude.name());
+        vals.put(DatabaseManager.TQ_ATTITUDE, attitude==null?null:attitude.name());
         vals.put(DatabaseManager.TQ_EXACTPHRASES, DatabaseManager.toCSV(exactPhrases));
         vals.put(DatabaseManager.TQ_REMOVE, DatabaseManager.toCSV(remove));
         vals.put(DatabaseManager.TQ_HASHTAGS, DatabaseManager.toCSV(hashtags));

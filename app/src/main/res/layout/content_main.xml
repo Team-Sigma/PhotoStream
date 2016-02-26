@@ -12,8 +12,11 @@
     tools:context="org.sigma.photostream.MainActivity"
     tools:showIn="@layout/app_bar_main">
 
-    <TextView
+    <GridView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:id="@+id/gridView"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"/>
 </RelativeLayout>
