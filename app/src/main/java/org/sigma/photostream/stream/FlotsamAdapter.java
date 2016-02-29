@@ -24,7 +24,7 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
     }
 
     @Override
-    public View getView(int position, View convertView, final ViewGroup parent) {
+    public View getView(int position, View convertView, ViewGroup parent) {
         if(convertView == null){
             LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService
                     (Context.LAYOUT_INFLATER_SERVICE);
@@ -52,8 +52,8 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
                     if(main.popupWindow != null){
                         main.popupWindow.dismiss();
                     }
-                    main.popupWindow = f.popup(getContext(), null);
-                    main.popupWindow.showAtLocation(parent.getRootView(), Gravity.CENTER, 0, 0);
+                    main.popupWindow = f.popup(getContext());
+                    main.popupWindow.showAtLocation(main.gridView, Gravity.CENTER, 0, 0);
                 }
             }
         });

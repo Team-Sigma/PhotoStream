@@ -95,7 +95,7 @@ public class Flotsam {
         imageUpdateListeners.add(listener);
     }
 
-    public View getPopupView(Context context, ViewGroup root){
+    protected View getPopupView(Context context){
         if(popupView != null){
             return popupView;
         }
@@ -142,8 +142,8 @@ public class Flotsam {
         return popupView;
     }
 
-    public PopupWindow popup(Context context, ViewGroup parent){
-        View v = getPopupView(context, parent);
+    public PopupWindow popup(Context context){
+        View v = getPopupView(context);
         PopupWindow res = new PopupWindow(v,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
