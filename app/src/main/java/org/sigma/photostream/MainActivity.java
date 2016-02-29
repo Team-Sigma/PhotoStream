@@ -13,6 +13,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.GridView;
+import android.widget.PopupWindow;
 
 import org.sigma.photostream.data.DatabaseManager;
 import org.sigma.photostream.stream.Stream;
@@ -24,6 +25,7 @@ public class MainActivity extends AppCompatActivity
     public static MainActivity mainActivity = null;
 
     public DatabaseManager databaseManager = null;
+    public PopupWindow popupWindow = null;
 
     public GridView gridView = null;
     public Toolbar toolbar = null;
@@ -76,9 +78,10 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
+        System.out.println("Back pressed!");
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
-        } else {
+        }else {
             super.onBackPressed();
         }
     }

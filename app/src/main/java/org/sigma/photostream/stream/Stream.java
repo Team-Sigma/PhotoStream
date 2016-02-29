@@ -1,14 +1,6 @@
 package org.sigma.photostream.stream;
 
 import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ListAdapter;
-import android.widget.ProgressBar;
 
 import org.sigma.photostream.R;
 import org.sigma.photostream.data.Savable;

@@ -18,5 +18,6 @@
         android:layout_height="wrap_content"
         android:id="@+id/imgFlotsam"
         android:visibility="invisible"
-        android:contentDescription="@string/imgFlotsam_desc"/>
+        android:contentDescription="@string/imgFlotsam_desc"
+        android:src="@mipmap/testimg"/>
 </LinearLayout>

@@ -1,8 +1,21 @@
 package org.sigma.photostream.stream;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.transition.Fade;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.PopupWindow;
+import android.widget.TextView;
+
+import org.sigma.photostream.MainActivity;
+import org.sigma.photostream.R;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -22,6 +35,8 @@ public class Flotsam {
     private Bitmap img;
     public String name = "";
     public String description = "";
+
+    private View popupView = null;
 
     private List<ImageUpdateListener> imageUpdateListeners = new LinkedList<>();
 
@@ -78,6 +93,66 @@ public class Flotsam {
 
     public void addImageUpdateListener(ImageUpdateListener listener){
         imageUpdateListeners.add(listener);
+    }
+
+    public View getPopupView(Context context, ViewGroup root){
+        if(popupView != null){
+            return popupView;
+        }
+        View.OnKeyListener dismiss = new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if(keyCode == KeyEvent.KEYCODE_BACK){
+                    MainActivity.mainActivity.popupWindow.dismiss();
+                    return true;
+                }
+                return false;
+            }
+        };
+
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        popupView = inflater.inflate(R.layout.flotsam_popup, null);
+        popupView.setVisibility(View.VISIBLE);
+        popupView.setOnKeyListener(dismiss);
+
+        TextView txtName = (TextView) popupView.findViewById(R.id.txtFlotsamName);
+        txtName.setText(name);
+        txtName.setOnKeyListener(dismiss);
+
+        TextView txtDesc = (TextView) popupView.findViewById(R.id.txtFlotsamDesc);
+        txtDesc.setText(description);
+        txtDesc.setOnKeyListener(dismiss);
+
+        final ImageView imgFlotsam = (ImageView) popupView.findViewById(R.id.imgFlotsamPopup);
+        this.addImageUpdateListener(new ImageUpdateListener() {
+            @Override
+            public void onImageUpdate(Flotsam flotsam) {
+                imgFlotsam.setImageBitmap(flotsam.img);
+            }
+        });
+        imgFlotsam.setImageBitmap(this.img);
+        imgFlotsam.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity.mainActivity.popupWindow.dismiss();
+            }
+        });
+        imgFlotsam.setOnKeyListener(dismiss);
+
+        return popupView;
+    }
+
+    public PopupWindow popup(Context context, ViewGroup parent){
+        View v = getPopupView(context, parent);
+        PopupWindow res = new PopupWindow(v,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        res.setFocusable(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            res.setEnterTransition(new Fade(Fade.IN));
+            res.setExitTransition(new Fade(Fade.OUT));
+        }
+        return res;
     }
 
     public interface ImageUpdateListener{

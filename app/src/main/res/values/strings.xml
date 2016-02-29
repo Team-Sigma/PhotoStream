@@ -6,4 +6,6 @@
 
     <string name="action_settings">Settings</string>
     <string name="imgFlotsam_desc">image form the web</string>
+
+    <string name="wait_for_popup">Image is loading, please wait.</string>
 </resources>

@@ -227,25 +227,29 @@ public class TwitterStream extends TembooStream {
                     String user = tweet.getJSONObject("user").getString("name");
                     //Need to check if tweet contains a photo
                     //The filter should have taken care of it but better safe than sorry
-                    JSONArray media = tweet.getJSONObject("entities").getJSONArray("media");
-                    for(int j = 0; j < media.length(); j++){
-                        JSONObject curr = media.getJSONObject(j);
-                        if(curr.getString("type").equals("photo")){
-                            //Tweet has a photo, download it asynchronously
-                            //Use tweet body as description
-                            String name = "Tweet from " + user;
-                            String description = tweet.getString("text");
-                            URL url = new URL(curr.getString("media_url_https"));
-                            Flotsam.ImageUpdateListener listener = new Flotsam.ImageUpdateListener() {
-                                @Override
-                                public void onImageUpdate(Flotsam flotsam) {
-                                    parent.endDLThread();
-                                }
-                            };
-                            parent.receiveFlotsam(new Flotsam(url, name, description, listener));
-                            parent.newDLThread();
-                            break;
+                    try {
+                        JSONArray media = tweet.getJSONObject("entities").getJSONArray("media");
+                        for(int j = 0; j < media.length(); j++){
+                            JSONObject curr = media.getJSONObject(j);
+                            if(curr.getString("type").equals("photo")){
+                                //Tweet has a photo, download it asynchronously
+                                //Use tweet body as description
+                                String name = "Tweet from " + user;
+                                String description = tweet.getString("text");
+                                URL url = new URL(curr.getString("media_url_https"));
+                                Flotsam.ImageUpdateListener listener = new Flotsam.ImageUpdateListener() {
+                                    @Override
+                                    public void onImageUpdate(Flotsam flotsam) {
+                                        parent.endDLThread();
+                                    }
+                                };
+                                parent.receiveFlotsam(new Flotsam(url, name, description, listener));
+                                parent.newDLThread();
+                                break;
+                            }
                         }
+                    }catch (JSONException e){
+                        e.printStackTrace();
                     }
                 }
             } catch (JSONException | MalformedURLException e) {
