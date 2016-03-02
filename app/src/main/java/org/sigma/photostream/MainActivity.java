@@ -1,5 +1,6 @@
 package org.sigma.photostream;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -22,6 +23,8 @@ import org.sigma.photostream.stream.TwitterStream;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+    public static final String EXTRA_STREAM_ID = "EXTRA_STREAM_ID";
+    public static final String EXTRA_STREAM_TYPE = "EXTRA_STREAM_TYPE";
     public static MainActivity mainActivity = null;
 
     public DatabaseManager databaseManager = null;
@@ -114,23 +117,25 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
+        if (id == R.id.nav_add) {
+            Intent intent = new Intent(this, NewStreamActivity.class);
+            startActivity(intent);
+        }else if( id == R.id.nav_settings){
+            Intent intent = new Intent(this, GlobalSettingsActivity.class);
+            startActivity(intent);
         }
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    public void startEditStreamActivity(Stream stream){
+        assert stream != null;
+        Intent intent = new Intent(this, EditStreamActivity.class);
+        databaseManager.save(stream);
+        intent.putExtra(EXTRA_STREAM_ID, stream.getID());
+        intent.putExtra(EXTRA_STREAM_TYPE, stream.getClass().toString());
+        startActivity(intent);
     }
 
     public Stream getCurrentStream() {

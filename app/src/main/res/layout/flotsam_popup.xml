@@ -25,5 +25,7 @@
         android:layout_height="wrap_content"
         android:text="New Text"
         android:id="@+id/txtFlotsamDesc"
-        android:layout_gravity="center_horizontal"/>
+        android:layout_gravity="center_horizontal"
+        android:autoLink="all"
+        android:linksClickable="true"/>
 </LinearLayout>

@@ -30,6 +30,8 @@ public class TwitterQuery implements Savable {
     public List<String> remove = new LinkedList<>();
     public List<String> hashtags = new LinkedList<>();
 
+    //TODO add the rest of these properties to edit_twitter.xml
+
     private final long id;
 
     public TwitterQuery(long id){

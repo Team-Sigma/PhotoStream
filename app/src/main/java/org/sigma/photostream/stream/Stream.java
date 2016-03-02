@@ -1,6 +1,7 @@
 package org.sigma.photostream.stream;
 
 import android.content.Context;
+import android.view.View;
 
 import org.sigma.photostream.R;
 import org.sigma.photostream.data.Savable;
@@ -60,6 +61,8 @@ public abstract class Stream implements Savable {
      * @return A list of all currently loaded images
      */
     public abstract List<Flotsam> toList();
+
+    public abstract View getEditView(Context context);
 
     protected abstract void onReceiveFlotsam(Flotsam img);
 

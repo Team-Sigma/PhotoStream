@@ -3,6 +3,9 @@ package org.sigma.photostream.stream;
 import android.content.ContentValues;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.LinearLayout;
 
 import com.temboo.Library.Twitter.Search.Tweets;
 import com.temboo.core.TembooException;
@@ -11,6 +14,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.sigma.photostream.MainActivity;
+import org.sigma.photostream.R;
 import org.sigma.photostream.data.DatabaseManager;
 
 import java.net.MalformedURLException;
@@ -125,6 +129,14 @@ public class TwitterStream extends TembooStream {
     @Override
     public List<Flotsam> toList() {
         return new LinkedList<>(images); //Copies the list so no-one can mess with it
+    }
+
+    @Override
+    public View getEditView(Context context) {
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        LinearLayout root = (LinearLayout) inflater.inflate(R.layout.edit_twitter, null);
+        //TODO add in functionality
+        return root;
     }
 
     @Override
