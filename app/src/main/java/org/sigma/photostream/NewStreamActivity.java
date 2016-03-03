@@ -6,7 +6,9 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.sigma.photostream.stream.Stream;
@@ -70,6 +72,8 @@ public class NewStreamActivity extends AppCompatActivity {
             s = new TwitterStream();
         }
         if(s != null){
+            EditText txtStreamName = (EditText) findViewById(R.id.txtStreamName);
+            s.name = txtStreamName.getText().toString();
             MainActivity parent = (MainActivity) this.getParent();
             parent.startEditStreamActivity(s);
             this.finish();

@@ -20,6 +20,8 @@ public class TwitterQuery implements Savable {
         return dbm.save((TwitterQuery) null);
     }
 
+    public String name;
+
     public String fromUser = null;
     public String fromList = null;
     public boolean question = false;
@@ -36,12 +38,18 @@ public class TwitterQuery implements Savable {
 
     public TwitterQuery(long id){
         this.id = id;
+        this.name = Stream.defaultName(this);
     }
 
     public TwitterQuery(){
         this(generateID());
         //Save the defaults as they are
         DatabaseManager.getInstance().save(this);
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     private static String ISOformat(Date d){
@@ -96,6 +104,7 @@ public class TwitterQuery implements Savable {
     public ContentValues toContentValues() {
         ContentValues vals = new ContentValues();
         vals.put(DatabaseManager.ID, getID());
+        vals.put(DatabaseManager.NAME, name);
         vals.put(DatabaseManager.TQ_FROMUSER, fromUser);
         vals.put(DatabaseManager.TQ_FROMLIST, fromList);
         vals.put(DatabaseManager.TQ_QUESTION, question);

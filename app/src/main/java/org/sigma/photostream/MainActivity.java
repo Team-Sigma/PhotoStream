@@ -21,6 +21,11 @@ import org.sigma.photostream.stream.Stream;
 import org.sigma.photostream.stream.TwitterQuery;
 import org.sigma.photostream.stream.TwitterStream;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     public static final String EXTRA_STREAM_ID = "EXTRA_STREAM_ID";
@@ -40,6 +45,10 @@ public class MainActivity extends AppCompatActivity
 
     private Stream currentStream = null;
 
+    public List<Stream> availableStreams = new ArrayList<>();
+
+    private List<OnPauseListener> onPauseListeners = new LinkedList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,12 +64,14 @@ public class MainActivity extends AppCompatActivity
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        final MainActivity me = this;
+
         fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Intent intent = new Intent(me, NewStreamActivity.class);
+                startActivity(intent);
             }
         });
 
@@ -73,10 +84,24 @@ public class MainActivity extends AppCompatActivity
         navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        TwitterQuery query = new TwitterQuery();
-        query.exactPhrases.add("lunch");
-        TwitterStream test = new TwitterStream(this, query);
-        setCurrentStream(test);
+        fetchAvailableStreams();
+        if(availableStreams.isEmpty()) {
+            TwitterQuery query = new TwitterQuery();
+            query.exactPhrases.add("lunch");
+            TwitterStream test = new TwitterStream(this, query);
+            databaseManager.save(test);
+            availableStreams.add(test);
+        }
+        setCurrentStream(availableStreams.get(0));
+    }
+
+    private <E extends Stream> void addAll(Map<Long, E> map){
+        availableStreams.addAll(map.values());
+    }
+
+    private void fetchAvailableStreams(){
+        addAll(databaseManager.getAllTwitterStreams());
+        //TODO add more streams here
     }
 
     @Override
@@ -105,13 +130,22 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            startEditStreamActivity(currentStream);
+            return true;
+        }else if(id == R.id.action_refresh){
+            refresh();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
+    private void refresh(){
+        currentStream.getFlotsamAdapter().removeAll();
+        currentStream.refresh();
+        startFetching();
+    }
+
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
@@ -142,13 +176,33 @@ public class MainActivity extends AppCompatActivity
         return currentStream;
     }
 
+    private void startFetching(){
+        currentStream.getAsyncUntilCountIs(minimumImageCount);
+    }
+
     public void setCurrentStream(Stream stream) {
         if(stream != null) {
             this.currentStream = stream;
             gridView.setAdapter(stream.getFlotsamAdapter());
-            stream.getAsyncUntilCountIs(minimumImageCount);
+            startFetching();
         }else{
             throw new NullPointerException("CurrentStream should not be null!");
         }
+    }
+
+    public void addOnPauseListener(OnPauseListener listener){
+        onPauseListeners.add(listener);
+    }
+
+    @Override
+    protected void onPause() {
+        for(OnPauseListener listener : onPauseListeners){
+            listener.onPause(this);
+        }
+        super.onPause();
+    }
+
+    public interface OnPauseListener{
+        void onPause(MainActivity mainActivity);
     }
 }

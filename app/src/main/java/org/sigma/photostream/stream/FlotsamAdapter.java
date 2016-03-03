@@ -39,17 +39,17 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
             img.setVisibility(View.INVISIBLE);
         }else{
             img.setImageBitmap(f.getImage());
-            progress.setVisibility(View.INVISIBLE);
+            progress.setVisibility(View.GONE);
             img.setVisibility(View.VISIBLE);
         }
         img.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(f.getImage() == null){
+                if (f.getImage() == null) {
                     Toast.makeText(getContext(), R.string.wait_for_popup, Toast.LENGTH_SHORT).show();
-                }else{
+                } else {
                     MainActivity main = MainActivity.mainActivity;
-                    if(main.popupWindow != null){
+                    if (main.popupWindow != null) {
                         main.popupWindow.dismiss();
                     }
                     main.popupWindow = f.popup(getContext());
@@ -58,5 +58,11 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
             }
         });
         return convertView;
+    }
+
+    public void removeAll(){
+        while(!this.isEmpty()){
+            this.remove(this.getItem(0));
+        }
     }
 }

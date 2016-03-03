@@ -29,9 +29,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
-        android:foreground="@android:drawable/ic_input_add"
+        android:foreground="@android:drawable/ic_menu_add"
         android:cropToPadding="false"
-        android:foregroundTint="#ffffff"
         app:backgroundTint="#f94444"/>
 
 </android.support.design.widget.CoordinatorLayout>
