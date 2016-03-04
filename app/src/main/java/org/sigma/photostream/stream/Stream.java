@@ -3,6 +3,7 @@ package org.sigma.photostream.stream;
 import android.content.Context;
 import android.view.View;
 
+import org.sigma.photostream.MainActivity;
 import org.sigma.photostream.R;
 import org.sigma.photostream.data.Savable;
 
@@ -13,6 +14,10 @@ import java.util.List;
  * @author Tobias Highfill
  */
 public abstract class Stream implements Savable {
+
+    public static <E extends Savable> String defaultName(E obj){
+        return obj.getClass().getSimpleName() + " " + obj.getID();
+    }
 
     public static final int NORMAL = 0;
     public static final int FETCHING = 1;
@@ -28,9 +33,26 @@ public abstract class Stream implements Savable {
 
     private final FlotsamAdapter adapter;
 
+    public String name;
+
     public Stream(long id, final Context context){
         this.id = id;
         adapter = new FlotsamAdapter(context, R.layout.flotsam);
+        name = defaultName(this);
+
+        //Save this stream automatically on pause
+        final Stream thisStream = this;
+        MainActivity.mainActivity.addOnPauseListener(new MainActivity.OnPauseListener() {
+            @Override
+            public void onPause(MainActivity mainActivity) {
+                mainActivity.databaseManager.save(thisStream);
+            }
+        });
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     /**
@@ -81,6 +103,7 @@ public abstract class Stream implements Savable {
 
     public void getUntilCountIs(int count){
         while(this.count() < count && this.hasMoreImages()){
+            System.out.println("Count = " + this.count() + ", goal = " + count);
             next();
         }
     }

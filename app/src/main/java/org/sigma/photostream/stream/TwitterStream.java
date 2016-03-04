@@ -160,6 +160,7 @@ public class TwitterStream extends TembooStream {
     public ContentValues toContentValues() {
         ContentValues vals = new ContentValues();
         vals.put(DatabaseManager.ID, getID());
+        vals.put(DatabaseManager.NAME, name);
         vals.put(DatabaseManager.TS_TWEETBATCHSIZE, tweetBatchSize);
         vals.put(DatabaseManager.TS_DOGEOCODE, doGeocode);
         vals.put(DatabaseManager.TS_GEOCODERADIUS, getGeocodeRadius());

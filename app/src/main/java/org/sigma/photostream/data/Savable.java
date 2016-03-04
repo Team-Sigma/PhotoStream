@@ -25,4 +25,10 @@ public interface Savable extends Identifiable {
      * @return The name of a nullable column
      */
     String nullColumn();
+
+    /**
+     * Gets a human readable name for this object
+     * @return A name for this object
+     */
+    String getName();
 }

@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import org.sigma.photostream.stream.Stream;
 import org.sigma.photostream.stream.TwitterQuery;
 import org.sigma.photostream.stream.TwitterStream;
 import org.sigma.photostream.util.Converter;
@@ -23,8 +24,22 @@ import java.util.StringTokenizer;
  * Singleton class that handles all the SQL and other database stuff.
  *
  * <h1>Versioning</h1>
- * <em>Current version: 1</em>
+ * <em>Current version: 2</em>
  * I will maintain a big table of version changes here, to make upgrading as painless as possible.
+ * <table>
+ *     <tr>
+ *         <th>Number</th>
+ *         <th>Notes</th>
+ *     </tr>
+ *     <tr>
+ *         <td>1</td>
+ *         <td>Added Twitter Query and Twitter Stream tables</td>
+ *     </tr>
+ *     <tr>
+ *         <td>2</td>
+ *         <td>Added name column to both tables</td>
+ *     </tr>
+ * </table>
  *
  * @author Tobias Highfill
  */
@@ -64,7 +79,7 @@ public class DatabaseManager {
     /**
      * The current database version. See the versioning info above.
      */
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 2;
 
     /**
      * The full type definition for primary keys in this DB including constraints.
@@ -72,6 +87,7 @@ public class DatabaseManager {
     public static final String PRIMARY_KEY_DEF = "INTEGER PRIMARY KEY ASC ON CONFLICT FAIL AUTOINCREMENT";
 
     public static final String ID = "id";
+    public static final String NAME = "name";
 
     /**
      * The name of the table storing the Twitter Queries
@@ -89,11 +105,12 @@ public class DatabaseManager {
     public static final String TQ_HASHTAGS = "hashtags";
     //The creation query
     private static final String CREATE_TWITTER_QUERY = String.format(
-            "CREATE TABLE IF NOT EXISTS %s (%s %s , %s TEXT, %s TEXT," +
+            "CREATE TABLE IF NOT EXISTS %s (%s %s, %s TEXT , %s TEXT, %s TEXT," +
                     "%s INTEGER, %s TEXT, %s TEXT, %s TEXT, %s TEXT, %s TEXT, %s TEXT)",
             TWITTER_QUERY,
             ID,
             PRIMARY_KEY_DEF,
+            NAME,
             TQ_FROMUSER,
             TQ_FROMLIST,
             TQ_QUESTION,
@@ -115,11 +132,12 @@ public class DatabaseManager {
     public static final String TS_QUERY = "query";
     //The creation query
     private static final String CREATE_TWITTER_STREAM = String.format(
-            "CREATE TABLE IF NOT EXISTS %s (%s %s, %s INTEGER NOT NULL, %s INTEGER," +
+            "CREATE TABLE IF NOT EXISTS %s (%s %s, %s TEXT, %s INTEGER NOT NULL, %s INTEGER," +
                     "%s INTEGER, %s INTEGER REFERENCES %s MATCH %s ON UPDATE SET NULL)",
             TWITTER_STREAM,
             ID,
             PRIMARY_KEY_DEF,
+            NAME,
             TS_TWEETBATCHSIZE,
             TS_DOGEOCODE,
             TS_GEOCODERADIUS,
@@ -144,6 +162,8 @@ public class DatabaseManager {
             res.fromUser = getString(cur, column);
             column = cur.getColumnIndex(TQ_FROMLIST);
             res.fromList = getString(cur, column);
+            column = cur.getColumnIndex(NAME);
+            res.name = getString(cur, column, Stream.defaultName(res));
             column = cur.getColumnIndex(TQ_QUESTION);
             res.question = getBoolean(cur, column, false);
             column = cur.getColumnIndex(TQ_SINCEDATE);
@@ -180,6 +200,8 @@ public class DatabaseManager {
             TwitterStream res = new TwitterStream(thisID, query);
             column = cur.getColumnIndex(TS_TWEETBATCHSIZE);
             res.tweetBatchSize = cur.getInt(column);
+            column = cur.getColumnIndex(NAME);
+            res.name = getString(cur, column, Stream.defaultName(res));
             column = cur.getColumnIndex(TS_DOGEOCODE);
             res.doGeocode = getBoolean(cur, column, false);
             column = cur.getColumnIndex(TS_GEOCODERADIUS);
@@ -206,13 +228,24 @@ public class DatabaseManager {
     }
 
     /**
-     * Convenience method for pulling out text fro a column
+     * Convenience method for pulling out text from a column
      * @param cur The Cursor pointing at the row
      * @param column The column to extract from
      * @return null if the column is NULL, the text otherwise
      */
     public static String getString(Cursor cur, int column){
-        return cur.isNull(column)?null:cur.getString(column);
+        return getString(cur, column, null);
+    }
+
+    /**
+     * Convenience method for pulling out text from a column with a default
+     * @param cur The Cursor pointing at the row
+     * @param column The column to extract from
+     * @param def The value to return if it is NULL
+     * @return The text if the column is not NULL, the default otherwise
+     */
+    public static String getString(Cursor cur, int column, String def){
+        return cur.isNull(column)?def:cur.getString(column);
     }
 
     /**
@@ -439,6 +472,12 @@ public class DatabaseManager {
         };
     }
 
+    /**
+     * Convenience function for creating empty {@link ContentValues} objects
+     * @param e The source object
+     * @param <E> The type of the source object
+     * @return A converter that only returns an empty {@link ContentValues}
+     */
     private <E> Converter<E, ContentValues> basicConverter(E e){
         return basicConverter(e, new ContentValues());
     }
@@ -446,9 +485,9 @@ public class DatabaseManager {
     private Map<Long, TwitterQuery> twitterQueryMap = null;
 
     /**
-     * Fetches the TwitterQuery with the corresponding ID
+     * Fetches the {@link TwitterQuery} with the corresponding ID
      * @param id The ID of the query to fetch
-     * @return The corresponding TwitterQuery
+     * @return The corresponding {@link TwitterQuery}
      */
     public TwitterQuery twitterQueryFromID(long id){
         if(twitterQueryMap == null) {
@@ -486,6 +525,11 @@ public class DatabaseManager {
 
     private Map<Long, TwitterStream> twitterStreamMap = null;
 
+    /**
+     * Fetch a single Twitter Stream by its ID
+     * @param id The ID of the Twitter Stream to fetch
+     * @return The corresponding TwitterStream or null if it can't be found
+     */
     public TwitterStream twitterStreamFromID(long id){
         if(twitterStreamMap == null){
             return fetchByID(id, TWITTER_STREAM, CURSOR_TWITTER_STREAM_CONVERTER);
@@ -493,16 +537,23 @@ public class DatabaseManager {
         return twitterStreamMap.get(id);
     }
 
+    /**
+     * Maps all Twitter Streams by their IDs
+     * @return A mapping of longs to Twitter Streams
+     */
     public Map<Long, TwitterStream> getAllTwitterStreams(){
         if(twitterStreamMap == null){
+            //Cache the queries
+            getAllTwitterQueries();
+            //Fetch and cache the streams
             twitterStreamMap = getAll(TWITTER_STREAM, CURSOR_TWITTER_STREAM_CONVERTER);
         }
         return twitterStreamMap;
     }
 
     /**
-     *
-     * @param stream
+     * Saves the stream and its query
+     * @param stream The stream to save
      * @return The ID of the entry or -1 if there was an error
      */
     public long save(TwitterStream stream){
@@ -510,9 +561,9 @@ public class DatabaseManager {
     }
 
     /**
-     *
-     * @param stream
-     * @param saveQuery
+     * Saves the stream and, optionally, its query
+     * @param stream The stream to save
+     * @param saveQuery True if you want to save the query as well
      * @return The ID of the entry or -1 if there was an error
      */
     public long save(TwitterStream stream, boolean saveQuery){
@@ -531,6 +582,11 @@ public class DatabaseManager {
         return res;
     }
 
+    /**
+     * Helper class to open the SQLite DB and handle table creation and version upgrades
+     *
+     * @author Tobias Highfill
+     */
     private class DBOpenHelper extends SQLiteOpenHelper{
 
         private DBOpenHelper(Context context){
@@ -545,7 +601,12 @@ public class DatabaseManager {
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
+            if(oldVersion <= 1 && newVersion >= 2){
+                //Add name column to twitter query, twitter stream tables
+                for(String table : new String[]{TWITTER_QUERY, TWITTER_STREAM}) {
+                    db.execSQL(String.format("ALTER TABLE %s ADD COLUMN %s TEXT", table, NAME));
+                }
+            }
         }
     }
 }
