@@ -116,7 +116,9 @@ public class TwitterStream extends TembooStream {
             res = buffer.remove(0);
         }
         if(buffer.size() <= LOW_BUFFER){
-            fetchMore();
+            if(this.getStatus() != Stream.DOWNLOADING_IMAGES) {
+                fetchMore();
+            }
             if(buffer.isEmpty()){
                 while (buffer.isEmpty()){}
                 res = buffer.remove(0);
