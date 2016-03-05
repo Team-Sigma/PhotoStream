@@ -13,13 +13,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AbsListView;
 import android.widget.GridView;
 import android.widget.PopupWindow;
 
 import org.sigma.photostream.data.DatabaseManager;
+import org.sigma.photostream.stream.Flotsam;
 import org.sigma.photostream.stream.Stream;
 import org.sigma.photostream.stream.TwitterQuery;
 import org.sigma.photostream.stream.TwitterStream;
+import org.sigma.photostream.util.Receiver;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -44,6 +47,7 @@ public class MainActivity extends AppCompatActivity
     public int minimumImageCount = 30;
 
     private Stream currentStream = null;
+    private boolean refilling = false;
 
     public List<Stream> availableStreams = new ArrayList<>();
 
@@ -60,6 +64,31 @@ public class MainActivity extends AppCompatActivity
         databaseManager = DatabaseManager.getInstance(getApplicationContext());
 
         gridView = (GridView) findViewById(R.id.gridView);
+        final int SAFETY = 10, BATCH_SIZE = 30;
+        final Receiver<List<Flotsam>> onComplete = new Receiver<List<Flotsam>>() {
+            @Override
+            public void receive(List<Flotsam> flotsams) {
+                refilling = false;
+                System.out.println("Finished refill");
+            }
+        };
+        gridView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if(visibleItemCount != 0
+                        && firstVisibleItem >= totalItemCount - visibleItemCount - SAFETY
+                        && !refilling){
+                    System.out.println("Running getManyAsync("+BATCH_SIZE+")...");
+                    refilling = true;
+                    currentStream.getManyAsync(BATCH_SIZE, onComplete);
+                }
+            }
+        });
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

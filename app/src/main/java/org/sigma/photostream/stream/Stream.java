@@ -6,6 +6,7 @@ import android.view.View;
 import org.sigma.photostream.MainActivity;
 import org.sigma.photostream.R;
 import org.sigma.photostream.data.Savable;
+import org.sigma.photostream.util.Receiver;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -101,9 +102,18 @@ public abstract class Stream implements Savable {
         return res;
     }
 
+    public void getManyAsync(final int count, final Receiver<List<Flotsam>> onComplete){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                onComplete.receive(getMany(count));
+            }
+        }).start();
+    }
+
     public void getUntilCountIs(int count){
         while(this.count() < count && this.hasMoreImages()){
-            System.out.println("Count = " + this.count() + ", goal = " + count);
+//            System.out.println("Count = " + this.count() + ", goal = " + count);
             next();
         }
     }
