@@ -21,7 +21,8 @@ public class EditStreamActivity extends AppCompatActivity {
         databaseManager = DatabaseManager.getInstance(getApplicationContext());
 
         Intent intent = getIntent();
-        long id = intent.getLongArrayExtra(MainActivity.EXTRA_STREAM_ID)[0];
+        long id = intent.getLongExtra(MainActivity.EXTRA_STREAM_ID, -1);
+        assert id >= 0;
         String type = intent.getStringExtra(MainActivity.EXTRA_STREAM_TYPE);
         assert type != null;
 

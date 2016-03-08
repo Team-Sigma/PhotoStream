@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import com.temboo.Library.Twitter.Search.Tweets;
@@ -135,8 +136,21 @@ public class TwitterStream extends TembooStream {
 
     @Override
     public View getEditView(Context context) {
+        final DatabaseManager db = DatabaseManager.getInstance();
+        final TwitterStream me = this;
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         LinearLayout root = (LinearLayout) inflater.inflate(R.layout.edit_twitter, null);
+
+        final EditText batchSize = (EditText) root.findViewById(R.id.numTweetBatchSize);
+        batchSize.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if(!hasFocus){
+                    tweetBatchSize = Integer.parseInt(batchSize.getText().toString());
+                    db.save(me);
+                }
+            }
+        });
         //TODO add in functionality
         return root;
     }

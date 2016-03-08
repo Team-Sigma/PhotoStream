@@ -103,12 +103,13 @@ public abstract class Stream implements Savable {
     }
 
     public void getManyAsync(final int count, final Receiver<List<Flotsam>> onComplete){
+        String threadName = this.getClass().getCanonicalName()+".getManyAsync("+count+")";
         new Thread(new Runnable() {
             @Override
             public void run() {
                 onComplete.receive(getMany(count));
             }
-        }).start();
+        }, threadName).start();
     }
 
     public void getUntilCountIs(int count){
@@ -119,12 +120,13 @@ public abstract class Stream implements Savable {
     }
 
     public void getAsyncUntilCountIs(final int count){
+        String threadName = this.getClass().getCanonicalName()+".getAsyncUntilCountIs("+count+")";
         new Thread(new Runnable() {
             @Override
             public void run() {
                 getUntilCountIs(count);
             }
-        }).start();
+        }, threadName).start();
     }
 
     protected void setStatus(int status){
