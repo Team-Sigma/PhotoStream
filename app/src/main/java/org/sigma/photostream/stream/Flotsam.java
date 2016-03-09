@@ -30,11 +30,18 @@ import java.util.Map;
  */
 public class Flotsam {
 
+    public static final boolean DEFAULT_LAZINESS = false;
+
     private static final Map<URL, Bitmap> KNOWN_IMAGES = new HashMap<>();
 
     private Bitmap img;
     public String name = "";
     public String description = "";
+
+    public boolean lazy = DEFAULT_LAZINESS;
+
+    private Downloader downloader = null;
+    private URL source = null;
 
     private View popupView = null;
 
@@ -54,8 +61,32 @@ public class Flotsam {
         this.description = description;
     }
 
+    public Flotsam(URL src, boolean lazy){
+        this.lazy = lazy;
+        downloader = new Downloader(this);
+        source = src;
+        if(!lazy){
+            downloader.execute(src);
+        }
+    }
+
+    public Flotsam(URL src, String name, boolean lazy){
+        this(src, lazy);
+        this.name = name;
+    }
+
+    public Flotsam(URL src, String name, String description, boolean lazy){
+        this(src, name, lazy);
+        this.description = description;
+    }
+
+    public Flotsam(URL src, String name, String description, ImageUpdateListener listener, boolean lazy){
+        this(src, name, description, lazy);
+        addImageUpdateListener(listener);
+    }
+
     public Flotsam(URL src){
-        new Downloader(this).execute(src);
+        this(src, DEFAULT_LAZINESS);
     }
 
     public Flotsam(URL src, String name){
@@ -88,6 +119,12 @@ public class Flotsam {
     }
 
     public Bitmap getImage() {
+        if(img == null && lazy && downloader.getStatus() != AsyncTask.Status.PENDING){
+            if(downloader.getStatus() == AsyncTask.Status.FINISHED){
+                downloader = new Downloader(this);
+            }
+            downloader.execute(source);
+        }
         return img;
     }
 

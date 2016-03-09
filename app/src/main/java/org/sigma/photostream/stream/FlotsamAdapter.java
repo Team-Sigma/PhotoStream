@@ -25,29 +25,28 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        final Flotsam f = this.getItem(position);
         if(convertView == null){
             LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService
                     (Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.flotsam, parent, false);
-            final Flotsam f = this.getItem(position);
             LinearLayout root = (LinearLayout) convertView;
             final ProgressBar progress = (ProgressBar) root.findViewById(R.id.barFlotsam);
             final ImageView img = (ImageView) root.findViewById(R.id.imgFlotsam);
+            Flotsam.ImageUpdateListener updateListener = new Flotsam.ImageUpdateListener() {
+                @Override
+                public void onImageUpdate(Flotsam flotsam) {
+                    img.setImageBitmap(flotsam.getImage());
+                    progress.setVisibility(View.INVISIBLE);
+                    img.setVisibility(View.VISIBLE);
+                }
+            };
+            f.addImageUpdateListener(updateListener);
             if(f.getImage() == null){
                 progress.setVisibility(View.VISIBLE);
                 img.setVisibility(View.INVISIBLE);
-                f.addImageUpdateListener(new Flotsam.ImageUpdateListener() {
-                    @Override
-                    public void onImageUpdate(Flotsam flotsam) {
-                        img.setImageBitmap(flotsam.getImage());
-                        progress.setVisibility(View.INVISIBLE);
-                        img.setVisibility(View.VISIBLE);
-                    }
-                });
             }else{
-                img.setImageBitmap(f.getImage());
-                progress.setVisibility(View.INVISIBLE);
-                img.setVisibility(View.VISIBLE);
+                updateListener.onImageUpdate(f);
             }
             img.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -65,6 +64,7 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
                 }
             });
         }
+        f.getImage();
         return convertView;
     }
 

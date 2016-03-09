@@ -292,7 +292,7 @@ public class TwitterStream extends TembooStream {
                                         parent.endDLThread();
                                     }
                                 };
-                                parent.receiveFlotsam(new Flotsam(url, name, description, listener));
+                                parent.receiveFlotsam(new Flotsam(url, name, description, listener, true));
                                 parent.newDLThread();
                                 break;
                             }
