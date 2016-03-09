@@ -29,34 +29,42 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
             LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService
                     (Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.flotsam, parent, false);
-        }
-        final Flotsam f = this.getItem(position);
-        LinearLayout root = (LinearLayout) convertView;
-        ProgressBar progress = (ProgressBar) root.findViewById(R.id.barFlotsam);
-        final ImageView img = (ImageView) root.findViewById(R.id.imgFlotsam);
-        if(f.getImage() == null){
-            progress.setVisibility(View.VISIBLE);
-            img.setVisibility(View.INVISIBLE);
-        }else{
-            img.setImageBitmap(f.getImage());
-            progress.setVisibility(View.GONE);
-            img.setVisibility(View.VISIBLE);
-        }
-        img.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (f.getImage() == null) {
-                    Toast.makeText(getContext(), R.string.wait_for_popup, Toast.LENGTH_SHORT).show();
-                } else {
-                    MainActivity main = MainActivity.mainActivity;
-                    if (main.popupWindow != null) {
-                        main.popupWindow.dismiss();
+            final Flotsam f = this.getItem(position);
+            LinearLayout root = (LinearLayout) convertView;
+            final ProgressBar progress = (ProgressBar) root.findViewById(R.id.barFlotsam);
+            final ImageView img = (ImageView) root.findViewById(R.id.imgFlotsam);
+            if(f.getImage() == null){
+                progress.setVisibility(View.VISIBLE);
+                img.setVisibility(View.INVISIBLE);
+                f.addImageUpdateListener(new Flotsam.ImageUpdateListener() {
+                    @Override
+                    public void onImageUpdate(Flotsam flotsam) {
+                        img.setImageBitmap(flotsam.getImage());
+                        progress.setVisibility(View.INVISIBLE);
+                        img.setVisibility(View.VISIBLE);
                     }
-                    main.popupWindow = f.popup(getContext());
-                    main.popupWindow.showAtLocation(main.gridView, Gravity.CENTER, 0, 0);
-                }
+                });
+            }else{
+                img.setImageBitmap(f.getImage());
+                progress.setVisibility(View.INVISIBLE);
+                img.setVisibility(View.VISIBLE);
             }
-        });
+            img.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (f.getImage() == null) {
+                        Toast.makeText(getContext(), R.string.wait_for_popup, Toast.LENGTH_SHORT).show();
+                    } else {
+                        MainActivity main = MainActivity.mainActivity;
+                        if (main.popupWindow != null) {
+                            main.popupWindow.dismiss();
+                        }
+                        main.popupWindow = f.popup(getContext());
+                        main.popupWindow.showAtLocation(main.gridView, Gravity.CENTER, 0, 0);
+                    }
+                }
+            });
+        }
         return convertView;
     }
 

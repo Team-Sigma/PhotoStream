@@ -2,6 +2,7 @@ package org.sigma.photostream.stream;
 
 import android.content.Context;
 import android.view.View;
+import android.view.ViewGroup;
 
 import org.sigma.photostream.MainActivity;
 import org.sigma.photostream.R;
@@ -85,7 +86,7 @@ public abstract class Stream implements Savable {
      */
     public abstract List<Flotsam> toList();
 
-    public abstract View getEditView(Context context);
+    public abstract View getEditView(Context context, ViewGroup parent);
 
     protected abstract void onReceiveFlotsam(Flotsam img);
 

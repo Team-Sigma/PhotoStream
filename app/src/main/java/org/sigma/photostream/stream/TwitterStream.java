@@ -5,8 +5,11 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.temboo.Library.Twitter.Search.Tweets;
 import com.temboo.core.TembooException;
@@ -134,21 +137,38 @@ public class TwitterStream extends TembooStream {
         return new LinkedList<>(images); //Copies the list so no-one can mess with it
     }
 
+    private void saveToast(Context context){
+        Toast.makeText(context, "Saved!", Toast.LENGTH_SHORT).show();
+    }
+
     @Override
-    public View getEditView(Context context) {
+    public View getEditView(final Context context, ViewGroup parent) {
         final DatabaseManager db = DatabaseManager.getInstance();
         final TwitterStream me = this;
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        LinearLayout root = (LinearLayout) inflater.inflate(R.layout.edit_twitter, null);
+        ViewGroup root = (ViewGroup) inflater.inflate(R.layout.edit_twitter, parent, true);
 
         final EditText batchSize = (EditText) root.findViewById(R.id.numTweetBatchSize);
+        batchSize.setText(String.format("%d",tweetBatchSize));
         batchSize.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
-                if(!hasFocus){
+                if (!hasFocus) {
                     tweetBatchSize = Integer.parseInt(batchSize.getText().toString());
                     db.save(me);
+                    saveToast(context);
                 }
+            }
+        });
+
+        final CheckBox chkDoGeocode = (CheckBox) root.findViewById(R.id.chkDoGeocode);
+        chkDoGeocode.setChecked(doGeocode);
+        chkDoGeocode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                doGeocode = chkDoGeocode.isChecked();
+                db.save(me);
+                saveToast(context);
             }
         });
         //TODO add in functionality
