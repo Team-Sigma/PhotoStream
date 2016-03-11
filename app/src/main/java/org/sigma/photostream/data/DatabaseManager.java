@@ -10,6 +10,7 @@ import org.sigma.photostream.stream.Stream;
 import org.sigma.photostream.stream.TwitterQuery;
 import org.sigma.photostream.stream.TwitterStream;
 import org.sigma.photostream.util.Converter;
+import org.sigma.photostream.util.Util;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -156,7 +157,7 @@ public class DatabaseManager {
     private static final Converter<Cursor, TwitterQuery> CURSOR_TWITTER_QUERY_CONVERTER = new Converter<Cursor, TwitterQuery>() {
         @Override
         public TwitterQuery convert(Cursor cur) {
-            long qID = cur.getLong(cur.getColumnIndex("id"));
+            long qID = cur.getLong(cur.getColumnIndex(ID));
             TwitterQuery res = new TwitterQuery(qID);
             int column = cur.getColumnIndex(TQ_FROMUSER);
             res.fromUser = getString(cur, column);
@@ -188,7 +189,7 @@ public class DatabaseManager {
     private final Converter<Cursor, TwitterStream> CURSOR_TWITTER_STREAM_CONVERTER = new Converter<Cursor, TwitterStream>() {
         @Override
         public TwitterStream convert(Cursor cur) {
-            long thisID = cur.getLong(cur.getColumnIndex("id"));
+            long thisID = cur.getLong(cur.getColumnIndex(ID));
             int column = cur.getColumnIndex(TS_QUERY);
             TwitterQuery query;
             if(cur.isNull(column)){
@@ -369,15 +370,13 @@ public class DatabaseManager {
     }
 
     /**
-     * Gets all entries from the table and places them in a map, keyed by their IDs
-     * @param table The table to pull values from
-     * @param converter The converter to turn a cursor object into an entry
-     * @param <E> The entry type (e.g. TwitterStream)
+     * Helper function to run through rows in a cursor
+     * @param cur Cursor to data
+     * @param converter Converter to use
+     * @param <E> Type to convert to
      * @return A map from IDs to corresponding entries
      */
-    private <E extends Identifiable> Map<Long, E> getAll(String table, Converter<Cursor, E> converter){
-        SQLiteDatabase db = this.openHelper.getReadableDatabase();
-        Cursor cur = db.query(table, null, null, null, null, null, null);
+    private <E extends Identifiable> Map<Long, E> getAll(Cursor cur, Converter<Cursor, E> converter){
         Map<Long, E> res = new HashMap<>();
         cur.moveToFirst();
         final int length = cur.getCount();
@@ -390,6 +389,34 @@ public class DatabaseManager {
     }
 
     /**
+     * Gets all entries from the table and places them in a map, keyed by their IDs
+     * @param table The table to pull values from
+     * @param converter The converter to turn a cursor object into an entry
+     * @param <E> The entry type (e.g. TwitterStream)
+     * @return A map from IDs to corresponding entries
+     */
+    private <E extends Identifiable> Map<Long, E> getAll(String table, Converter<Cursor, E> converter){
+        SQLiteDatabase db = this.openHelper.getReadableDatabase();
+        Cursor cur = db.query(table, null, null, null, null, null, null);
+        return getAll(cur, converter);
+    }
+
+    /**
+     * Performs a selection on multiple joined tables
+     * @param joinTables List of tables to join
+     * @param converter The converter to turn a cursor object into an entry
+     * @param <E> The entry type (e.g. TwitterStream)
+     * @return A map from IDs to corresponding entries
+     */
+    private <E extends Identifiable> Map<Long, E> getAll(String[] joinTables, Converter<Cursor, E> converter){
+        SQLiteDatabase db = this.openHelper.getReadableDatabase();
+        StringBuilder join = new StringBuilder("SELECT * FROM ");
+        Util.join(",", join, joinTables);
+        Cursor cur = db.rawQuery(join.toString(), new String[]{});
+        return getAll(cur, converter);
+    }
+
+    /**
      * Fetches a single entry from a table by its ID
      * @param id The ID of the entry you want
      * @param table The name of the table to look into
@@ -399,7 +426,28 @@ public class DatabaseManager {
      */
     private <E> E fetchByID(long id, String table, Converter<Cursor, E> conv){
         SQLiteDatabase db = this.openHelper.getReadableDatabase();
-        Cursor cur = db.query(table, null, "id=" + id, null, null, null, null);
+        Cursor cur = db.query(table, null, ID + '=' + id, null, null, null, null);
+        if(cur.getCount() == 0){
+            return null;
+        }
+        cur.moveToFirst();
+        return conv.convert(cur);
+    }
+
+    /**
+     * Fetches a single entry from a joined table by its ID
+     * @param id The ID of the entry you want
+     * @param joinTables The table names to join. The id will be matched to the first one
+     * @param conv The converter to turn a cursor object into an entry
+     * @param <E> The entry type (e.g. TwitterStream)
+     * @return The matching entry or null if it wasn't found
+     */
+    private <E> E fetchByID(long id, String[] joinTables, Converter<Cursor, E> conv){
+        SQLiteDatabase db = this.openHelper.getReadableDatabase();
+        StringBuilder query = new StringBuilder("SELECT * FROM ");
+        Util.join(",", query, joinTables);
+        query.append(" WHERE ").append(joinTables[0]).append('.').append(ID).append('=').append(id);
+        Cursor cur = db.rawQuery(query.toString(), new String[]{});
         if(cur.getCount() == 0){
             return null;
         }
