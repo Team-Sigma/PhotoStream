@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import com.temboo.Library.Tumblr.Tagged.RetrievePostsWithTag.RetrievePostsWithTagInputSet;
@@ -136,9 +137,9 @@ public class TumblrStream extends TembooStream{
     }
 
     @Override
-    public View getEditView(Context context) {
+    public View getEditView(Context context, ViewGroup parent) {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        LinearLayout root = (LinearLayout) inflater.inflate(R.layout.edit_tumblr, null);
+        LinearLayout root = (LinearLayout) inflater.inflate(R.layout.edit_tumblr, parent, false);
         //TODO add in functionality
         return root;
     }
@@ -242,7 +243,7 @@ public class TumblrStream extends TembooStream{
                             };
                             parent.receiveFlotsam(new Flotsam(url, name, description, listener));
                             parent.newDLThread();
-                            break;
+                            //break; //<-- there's your problem!
                         }
                     }catch (JSONException e){
                         e.printStackTrace();

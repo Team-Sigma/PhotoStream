@@ -36,18 +36,18 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
             Flotsam.ImageUpdateListener updateListener = new Flotsam.ImageUpdateListener() {
                 @Override
                 public void onImageUpdate(Flotsam flotsam) {
-                    img.setImageBitmap(flotsam.getImage());
-                    progress.setVisibility(View.INVISIBLE);
-                    img.setVisibility(View.VISIBLE);
+                    if(flotsam.getImage() == null){
+                        progress.setVisibility(View.VISIBLE);
+                        img.setVisibility(View.INVISIBLE);
+                    }else {
+                        img.setImageBitmap(flotsam.getImage());
+                        progress.setVisibility(View.INVISIBLE);
+                        img.setVisibility(View.VISIBLE);
+                    }
                 }
             };
             f.addImageUpdateListener(updateListener);
-            if(f.getImage() == null){
-                progress.setVisibility(View.VISIBLE);
-                img.setVisibility(View.INVISIBLE);
-            }else{
-                updateListener.onImageUpdate(f);
-            }
+            updateListener.onImageUpdate(f);
             img.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
