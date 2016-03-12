@@ -3,6 +3,9 @@ package org.sigma.photostream;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 
 import org.sigma.photostream.data.DatabaseManager;
 import org.sigma.photostream.stream.Stream;
@@ -13,6 +16,8 @@ public class EditStreamActivity extends AppCompatActivity {
     Stream stream = null;
     DatabaseManager databaseManager = null;
 
+    View content = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -21,7 +26,8 @@ public class EditStreamActivity extends AppCompatActivity {
         databaseManager = DatabaseManager.getInstance(getApplicationContext());
 
         Intent intent = getIntent();
-        long id = intent.getLongArrayExtra(MainActivity.EXTRA_STREAM_ID)[0];
+        long id = intent.getLongExtra(MainActivity.EXTRA_STREAM_ID, -1);
+        assert id >= 0;
         String type = intent.getStringExtra(MainActivity.EXTRA_STREAM_TYPE);
         assert type != null;
 
@@ -30,6 +36,9 @@ public class EditStreamActivity extends AppCompatActivity {
         }
         //TODO add tests for other streams
 
-
+        if(stream != null){
+            ScrollView root = (ScrollView) findViewById(R.id.EditStreamRoot);
+            content = stream.getEditView(getApplicationContext(), root);
+        }
     }
 }
