@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import org.sigma.photostream.stream.Stream;
+import org.sigma.photostream.stream.TumblrQuery;
+import org.sigma.photostream.stream.TumblrStream;
 import org.sigma.photostream.stream.TwitterQuery;
 import org.sigma.photostream.stream.TwitterStream;
 import org.sigma.photostream.util.Converter;
@@ -93,6 +95,7 @@ public class DatabaseManager {
      * The name of the table storing the Twitter Queries
      */
     public static final String TWITTER_QUERY = "TwitterQuery";
+
     //The column names
     public static final String TQ_FROMUSER = "fromUser";
     public static final String TQ_FROMLIST = "fromList";
@@ -122,6 +125,39 @@ public class DatabaseManager {
             TQ_HASHTAGS);
 
     /**
+     * The name of the table storing the Tumblr Queries
+     */
+    public static final String TUMBLR_QUERY = "TumblrQuery";
+
+    //The column names
+    public static final String TUQ_FROMUSER = "fromUser";
+    public static final String TUQ_FROMLIST = "fromList";
+    public static final String TUQ_QUESTION = "question";
+    public static final String TUQ_SINCEDATE = "sinceDate";
+    public static final String TUQ_UNTILDATE = "untilDate";
+    public static final String TUQ_ATTITUDE = "attitude";
+    public static final String TUQ_EXACTPHRASES = "exactPhrases";
+    public static final String TUQ_REMOVE = "remove";
+    public static final String TUQ_HASHTAGS = "hashtags";
+    //The creation query
+    private static final String CREATE_TUMBLR_QUERY = String.format(
+            "CREATE TABLE IF NOT EXISTS %s (%s %s, %s TEXT , %s TEXT, %s TEXT," +
+                    "%s INTEGER, %s TEXT, %s TEXT, %s TEXT, %s TEXT, %s TEXT, %s TEXT)",
+            TUMBLR_QUERY,
+            ID,
+            PRIMARY_KEY_DEF,
+            NAME,
+            TUQ_FROMUSER,
+            TUQ_FROMLIST,
+            TUQ_QUESTION,
+            TUQ_SINCEDATE,
+            TUQ_UNTILDATE,
+            TUQ_ATTITUDE,
+            TUQ_EXACTPHRASES,
+            TUQ_REMOVE,
+            TUQ_HASHTAGS);
+
+    /**
      * The name of the table storing the Twitter Streams
      */
     public static final String TWITTER_STREAM = "TwitterStream";
@@ -143,6 +179,28 @@ public class DatabaseManager {
             TS_GEOCODERADIUS,
             TS_QUERY,
             TWITTER_QUERY,
+            ID);
+
+    /**
+     * The name of the table storing the Tumblr Streams
+     */
+    public static final String TUMBLR_STREAM = "TumblrStream";
+    //The column names
+    public static final String TUS_POSTBATCHSIZE = "postBatchSize";
+    public static final String TUS_DOGEOCODE = "doGeocode";
+    public static final String TUS_QUERY = "query";
+    //The creation query
+    private static final String CREATE_TUMBLR_STREAM = String.format(
+            "CREATE TABLE IF NOT EXISTS %s (%s %s, %s TEXT, %s INTEGER NOT NULL, %s INTEGER," +
+                    "%s INTEGER REFERENCES %s MATCH %s ON UPDATE SET NULL)",
+            TUMBLR_STREAM,
+            ID,
+            PRIMARY_KEY_DEF,
+            NAME,
+            TUS_POSTBATCHSIZE,
+            TUS_DOGEOCODE,
+            TUS_QUERY,
+            TUMBLR_QUERY,
             ID);
 
     /**
@@ -183,6 +241,38 @@ public class DatabaseManager {
     };
 
     /**
+     * Builds TumblrQuery objects from cursors
+     */
+    private static final Converter<Cursor, TumblrQuery> CURSOR_TUMBLR_QUERY_CONVERTER = new Converter<Cursor, TumblrQuery>() {
+        @Override
+        public TumblrQuery convert(Cursor cur) {
+            long qID = cur.getLong(cur.getColumnIndex("id"));
+            TumblrQuery res = new TumblrQuery(qID);
+            int column = cur.getColumnIndex(TUQ_FROMUSER);
+            res.fromUser = getString(cur, column);
+            column = cur.getColumnIndex(TUQ_FROMLIST);
+            res.fromList = getString(cur, column);
+            column = cur.getColumnIndex(NAME);
+            res.name = getString(cur, column, Stream.defaultName(res));
+            column = cur.getColumnIndex(TUQ_QUESTION);
+            res.question = getBoolean(cur, column, false);
+            column = cur.getColumnIndex(TUQ_SINCEDATE);
+            res.sinceDate = parseDate(getString(cur, column));
+            column = cur.getColumnIndex(TUQ_UNTILDATE);
+            res.untilDate = parseDate(getString(cur, column));
+            column = cur.getColumnIndex(TUQ_ATTITUDE);
+            res.attitude = cur.isNull(column)?null:TumblrStream.Attitude.valueOf(cur.getString(column));
+            column = cur.getColumnIndex(TUQ_EXACTPHRASES);
+            res.exactPhrases = parseCSV(getString(cur, column));
+            column = cur.getColumnIndex(TUQ_REMOVE);
+            res.remove = parseCSV(getString(cur, column));
+            column = cur.getColumnIndex(TUQ_HASHTAGS);
+            res.hashtags = parseCSV(getString(cur, column));
+            return res;
+        }
+    };
+
+    /**
      * Converter for TwitterStreams. Stored locally due to reliance on non-static methods
      */
     private final Converter<Cursor, TwitterStream> CURSOR_TWITTER_STREAM_CONVERTER = new Converter<Cursor, TwitterStream>() {
@@ -208,6 +298,32 @@ public class DatabaseManager {
             if(!cur.isNull(column)) {
                 res.setGeocodeRadius(cur.getInt(column));
             }
+            return res;
+        }
+    };
+
+    /**
+     * Converter for TumblrStreams. Stored locally due to reliance on non-static methods
+     */
+    private final Converter<Cursor, TumblrStream> CURSOR_TUMBLR_STREAM_CONVERTER = new Converter<Cursor, TumblrStream>() {
+        @Override
+        public TumblrStream convert(Cursor cur) {
+            long thisID = cur.getLong(cur.getColumnIndex("id"));
+            int column = cur.getColumnIndex(TUS_QUERY);
+            TumblrQuery query;
+            if(cur.isNull(column)){
+                query = new TumblrQuery();
+            }else{
+                int qID = cur.getInt(column);
+                query = tumblrQueryFromID(qID);
+            }
+            TumblrStream res = new TumblrStream(thisID, query);
+            column = cur.getColumnIndex(TUS_POSTBATCHSIZE);
+            res.postBatchSize = cur.getInt(column);
+            column = cur.getColumnIndex(NAME);
+            res.name = getString(cur, column, Stream.defaultName(res));
+            column = cur.getColumnIndex(TS_DOGEOCODE);
+            res.doGeocode = getBoolean(cur, column, false);
             return res;
         }
     };
@@ -483,6 +599,7 @@ public class DatabaseManager {
     }
 
     private Map<Long, TwitterQuery> twitterQueryMap = null;
+    private Map<Long, TumblrQuery> tumblrQueryMap = null;
 
     /**
      * Fetches the {@link TwitterQuery} with the corresponding ID
@@ -497,6 +614,18 @@ public class DatabaseManager {
     }
 
     /**
+     * Fetches the {@link TumblrQuery} with the corresponding ID
+     * @param id The ID of the query to fetch
+     * @return The corresponding {@link TumblrQuery}
+     */
+    public TumblrQuery tumblrQueryFromID(long id){
+        if(tumblrQueryMap == null) {
+            return fetchByID(id, TUMBLR_QUERY, CURSOR_TUMBLR_QUERY_CONVERTER);
+        }
+        return tumblrQueryMap.get(id);
+    }
+
+    /**
      * Maps all Twitter Queries by their ID
      * @return A Map connecting queries to their IDs
      */
@@ -505,6 +634,17 @@ public class DatabaseManager {
             twitterQueryMap = getAll(TWITTER_QUERY, CURSOR_TWITTER_QUERY_CONVERTER);
         }
         return twitterQueryMap;
+    }
+
+    /**
+     * Maps all Tumblr Queries by their ID
+     * @return A Map connecting queries to their IDs
+     */
+    public Map<Long, TumblrQuery> getAllTumblrQueries(){
+        if(tumblrQueryMap == null){
+            tumblrQueryMap = getAll(TUMBLR_QUERY, CURSOR_TUMBLR_QUERY_CONVERTER);
+        }
+        return tumblrQueryMap;
     }
 
     /**
@@ -523,6 +663,22 @@ public class DatabaseManager {
         return res;
     }
 
+    /**
+     * Save the query in the database and return it's id
+     * @param query the query to save
+     * @return The ID of the entry or -1 if there was an error
+     */
+    public long save(TumblrQuery query){
+        if(query == null){
+            return save(TUMBLR_QUERY, TUQ_ATTITUDE, null, basicConverter(query));
+        }
+        long res = save((Savable) query);
+        if(tumblrQueryMap != null){
+            tumblrQueryMap.put(res, query);
+        }
+        return res;
+    }
+
     private Map<Long, TwitterStream> twitterStreamMap = null;
 
     /**
@@ -537,6 +693,20 @@ public class DatabaseManager {
         return twitterStreamMap.get(id);
     }
 
+    private Map<Long, TumblrStream> tumblrStreamMap = null;
+
+    /**
+     * Fetch a single Tumblr Stream by its ID
+     * @param id The ID of the Tumblr Stream to fetch
+     * @return The corresponding TumblrStream or null if it can't be found
+     */
+    public TumblrStream tumblrStreamFromID(long id){
+        if(tumblrStreamMap == null){
+            return fetchByID(id, TUMBLR_STREAM, CURSOR_TUMBLR_STREAM_CONVERTER);
+        }
+        return tumblrStreamMap.get(id);
+    }
+
     /**
      * Maps all Twitter Streams by their IDs
      * @return A mapping of longs to Twitter Streams
@@ -549,6 +719,29 @@ public class DatabaseManager {
             twitterStreamMap = getAll(TWITTER_STREAM, CURSOR_TWITTER_STREAM_CONVERTER);
         }
         return twitterStreamMap;
+    }
+
+    /**
+     * Maps all Tumblr Streams by their IDs
+     * @return A mapping of longs to Tumblr Streams
+     */
+    public Map<Long, TumblrStream> getAllTumblrStreams(){
+        if(tumblrStreamMap == null){
+            //Cache the queries
+            getAllTumblrQueries();
+            //Fetch and cache the streams
+            tumblrStreamMap = getAll(TUMBLR_STREAM, CURSOR_TUMBLR_STREAM_CONVERTER);
+        }
+        return tumblrStreamMap;
+    }
+
+    /**
+     * Saves the stream and its query
+     * @param stream The stream to save
+     * @return The ID of the entry or -1 if there was an error
+     */
+    public long save(TumblrStream stream){
+        return save(stream, true);
     }
 
     /**
@@ -583,6 +776,28 @@ public class DatabaseManager {
     }
 
     /**
+     * Saves the stream and, optionally, its query
+     * @param stream The stream to save
+     * @param saveQuery True if you want to save the query as well
+     * @return The ID of the entry or -1 if there was an error
+     */
+    public long save(TumblrStream stream, boolean saveQuery){
+        if(stream == null){
+            ContentValues vals = new ContentValues();
+            vals.put(TUS_POSTBATCHSIZE, 30);
+            return save(TUMBLR_STREAM, TUS_DOGEOCODE, null, basicConverter(stream, vals));
+        }
+        if(saveQuery){
+            save(stream.query);
+        }
+        long res = save((Savable) stream);
+        if(tumblrStreamMap != null){
+            tumblrStreamMap.put(res, stream);
+        }
+        return res;
+    }
+
+    /**
      * Helper class to open the SQLite DB and handle table creation and version upgrades
      *
      * @author Tobias Highfill
@@ -597,6 +812,8 @@ public class DatabaseManager {
         public void onCreate(SQLiteDatabase db) {
             db.execSQL(CREATE_TWITTER_QUERY);
             db.execSQL(CREATE_TWITTER_STREAM);
+            db.execSQL(CREATE_TUMBLR_QUERY);
+            db.execSQL(CREATE_TUMBLR_STREAM);
         }
 
         @Override
@@ -604,6 +821,10 @@ public class DatabaseManager {
             if(oldVersion <= 1 && newVersion >= 2){
                 //Add name column to twitter query, twitter stream tables
                 for(String table : new String[]{TWITTER_QUERY, TWITTER_STREAM}) {
+                    db.execSQL(String.format("ALTER TABLE %s ADD COLUMN %s TEXT", table, NAME));
+                }
+                //Add name column to tumblr query, tumblr stream tables
+                for(String table : new String[]{TUMBLR_QUERY, TUMBLR_STREAM}) {
                     db.execSQL(String.format("ALTER TABLE %s ADD COLUMN %s TEXT", table, NAME));
                 }
             }

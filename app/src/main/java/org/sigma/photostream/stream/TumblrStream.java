@@ -30,8 +30,8 @@ import java.util.List;
 public class TumblrStream extends TembooStream{
 
 
-    private final String CONSUMER_KEY = "QS4RzgCb9Eby8YYTX9y3LcqqkOP18fNG20G133AsIOs3aVVCds";
-    private final String SEARCH_TERM = "Food";
+    private static final String CONSUMER_KEY = "QS4RzgCb9Eby8YYTX9y3LcqqkOP18fNG20G133AsIOs3aVVCds";
+    private static final String SEARCH_TERM = "Anime";
 
     private static final int LOW_BUFFER = 10;
 
@@ -44,9 +44,8 @@ public class TumblrStream extends TembooStream{
     public int postBatchSize = 20;
 
     public boolean doGeocode = false;
-    private int geocodeRadius = 1;
 
-   // public TumblrQuery query;
+   public TumblrQuery query;
 
     private int remaining = 100;
     private long resetAt = 0;
@@ -54,20 +53,20 @@ public class TumblrStream extends TembooStream{
     private List<Flotsam> images = new LinkedList<>();
     private volatile List<Flotsam> buffer = new LinkedList<>();
 
-//    public TumblrStream(long id, Context context, TumblrQuery query){
-//        super(id, context);
-//        this.query = query;
-//    }
+    public TumblrStream(long id, Context context, TumblrQuery query){
+        super(id, context);
+        this.query = query;
+    }
 
-//    public TumblrStream(long id, Context context){
-//        this(id, context, new TumblrQuery());
-//    }
-//
-//    public TumblrStream(Context context, TumblrQuery query){
-//        this(generateID(), context, query);
-//        //Save right now to update the DB
-//        DatabaseManager.getInstance().save(this);
-//    }
+    public TumblrStream(long id, Context context){
+        this(id, context, new TumblrQuery());
+    }
+
+    public TumblrStream(Context context, TumblrQuery query){
+        this(generateID(), context, query);
+        //Save right now to update the DB
+        DatabaseManager.getInstance().save(this);
+    }
 
     public TumblrStream(Context context){
         this(context, new TumblrQuery());
@@ -119,7 +118,9 @@ public class TumblrStream extends TembooStream{
             res = buffer.remove(0);
         }
         if(buffer.size() <= LOW_BUFFER){
-            fetchMore();
+            if(this.getStatus() != Stream.DOWNLOADING_IMAGES) {
+                fetchMore();
+            }
             if(buffer.isEmpty()){
                 while (buffer.isEmpty()){}
                 res = buffer.remove(0);
@@ -148,27 +149,34 @@ public class TumblrStream extends TembooStream{
         this.sendUpdateToListeners(img);
     }
 
-//    @Override
-//    public ContentValues toContentValues() {
-//        ContentValues vals = new ContentValues();
-//        vals.put(DatabaseManager.ID, getID());
-//        vals.put(DatabaseManager.NAME, name);
-//        vals.put(DatabaseManager.TS_TUMBLRBATCHSIZE, tumblrBatchSize);
-//        vals.put(DatabaseManager.TS_DOGEOCODE, doGeocode);
-//        vals.put(DatabaseManager.TS_GEOCODERADIUS, getGeocodeRadius());
-//        vals.put(DatabaseManager.TS_QUERY, query.getID());
-//        return vals;
-//    }
+    @Override
+    public ContentValues toContentValues() {
+        ContentValues vals = new ContentValues();
+        vals.put(DatabaseManager.ID, getID());
+        vals.put(DatabaseManager.NAME, name);
+        vals.put(DatabaseManager.TUS_POSTBATCHSIZE, postBatchSize);
+        vals.put(DatabaseManager.TUS_DOGEOCODE, doGeocode);
+        vals.put(DatabaseManager.TUS_QUERY, query.getID());
+        return vals;
+    }
 
-//    @Override
-//    public String getTable() {
-//        return DatabaseManager.TUMBLR_STREAM;
-//    }
+    @Override
+    public String getTable() {
+        return DatabaseManager.TUMBLR_STREAM;
+    }
 
-//    @Override
-//    public String nullColumn() {
-//        return DatabaseManager.TS_GEOCODERADIUS;
-//    }
+    @Override
+    public String nullColumn() {
+        return null;
+    }
+
+    public enum Attitude{
+        POSITIVE(":)"), NEGATIVE(":(");
+        public final String face;
+        Attitude(String face){
+            this.face = face;
+        }
+    }
 
     private class TumblrFetcher extends AsyncTask<String, Void, JSONObject> {
         final TumblrStream parent;
@@ -212,7 +220,7 @@ public class TumblrStream extends TembooStream{
                 System.out.println("Processing "+posts.length()+" posts...");
                 for(int i=0; i < posts.length(); i++){
                     JSONObject post = posts.getJSONObject(i);
-                    String user = post.getString("post_author");
+                    String user = post.getString("blog_name");
                     //Need to check if tweet contains a photo
                     //The filter should have taken care of it but better safe than sorry
                     try {
@@ -223,7 +231,8 @@ public class TumblrStream extends TembooStream{
                             //Use post body as description
                             String name = "Post from " + user;
                             String description = post.getString("summary");
-                            URL url = new URL(post.getString("image_permalink"));
+                            String urlString = post.getJSONArray("photos").getJSONObject(0).getJSONArray("alt_sizes").getJSONObject(0).getString("url");
+                            URL url = new URL(urlString);
                             Flotsam.ImageUpdateListener listener = new Flotsam.ImageUpdateListener() {
                                 @Override
                                 public void onImageUpdate(Flotsam flotsam) {

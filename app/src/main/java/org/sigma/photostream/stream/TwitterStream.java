@@ -116,7 +116,9 @@ public class TwitterStream extends TembooStream {
             res = buffer.remove(0);
         }
         if(buffer.size() <= LOW_BUFFER){
-            fetchMore();
+            if(this.getStatus() != Stream.DOWNLOADING_IMAGES) {
+                fetchMore();
+            }
             if(buffer.isEmpty()){
                 while (buffer.isEmpty()){}
                 res = buffer.remove(0);
@@ -155,8 +157,6 @@ public class TwitterStream extends TembooStream {
         }
         this.geocodeRadius = geocodeRadius;
     }
-
-    @Override
     public ContentValues toContentValues() {
         ContentValues vals = new ContentValues();
         vals.put(DatabaseManager.ID, getID());
