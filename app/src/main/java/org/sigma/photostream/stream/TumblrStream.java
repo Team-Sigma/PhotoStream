@@ -231,6 +231,7 @@ public class TumblrStream extends TembooStream{
                             //Use post body as description
                             String name = "Post from " + user;
                             String description = post.getString("summary");
+                            System.out.println("Found post! User: "+ user);
                             String urlString = post.getJSONArray("photos").getJSONObject(0).getJSONArray("alt_sizes").getJSONObject(0).getString("url");
                             URL url = new URL(urlString);
                             Flotsam.ImageUpdateListener listener = new Flotsam.ImageUpdateListener() {

@@ -41,6 +41,10 @@ import java.util.StringTokenizer;
  *         <td>2</td>
  *         <td>Added name column to both tables</td>
  *     </tr>
+ *     <tr>
+ *         <td>3</td>
+ *         <td>Added Tumblr Stream, Tumblr query tables</td>
+ *     </tr>
  * </table>
  *
  * @author Tobias Highfill
@@ -81,7 +85,7 @@ public class DatabaseManager {
     /**
      * The current database version. See the versioning info above.
      */
-    public static final int DATABASE_VERSION = 2;
+    public static final int DATABASE_VERSION = 3;
 
     /**
      * The full type definition for primary keys in this DB including constraints.
@@ -808,12 +812,16 @@ public class DatabaseManager {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
         }
 
+        private void createTumblrTables(SQLiteDatabase db){
+            db.execSQL(CREATE_TUMBLR_QUERY);
+            db.execSQL(CREATE_TUMBLR_STREAM);
+        }
+
         @Override
         public void onCreate(SQLiteDatabase db) {
             db.execSQL(CREATE_TWITTER_QUERY);
             db.execSQL(CREATE_TWITTER_STREAM);
-            db.execSQL(CREATE_TUMBLR_QUERY);
-            db.execSQL(CREATE_TUMBLR_STREAM);
+            createTumblrTables(db);
         }
 
         @Override
@@ -827,6 +835,10 @@ public class DatabaseManager {
                 for(String table : new String[]{TUMBLR_QUERY, TUMBLR_STREAM}) {
                     db.execSQL(String.format("ALTER TABLE %s ADD COLUMN %s TEXT", table, NAME));
                 }
+            }
+            if(oldVersion <= 2 && newVersion >= 3){
+                //Add Tumblr stream, Tumblr query
+                createTumblrTables(db);
             }
         }
     }
