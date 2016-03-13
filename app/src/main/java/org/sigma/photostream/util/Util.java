@@ -32,4 +32,8 @@ public class Util {
         }
         return dest.toString();
     }
+
+    public static <E> E[] array(E... objects){
+        return objects;
+    }
 }

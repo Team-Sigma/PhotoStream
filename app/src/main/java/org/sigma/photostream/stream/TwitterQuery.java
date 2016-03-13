@@ -44,7 +44,12 @@ public class TwitterQuery implements Savable {
     public TwitterQuery(){
         this(generateID());
         //Save the defaults as they are
-        DatabaseManager.getInstance().save(this);
+        saveSelf();
+    }
+
+    public void saveSelf(){
+        DatabaseManager dbm = DatabaseManager.getInstance();
+        dbm.save(this);
     }
 
     @Override

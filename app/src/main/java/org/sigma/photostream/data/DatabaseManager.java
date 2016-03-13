@@ -1,10 +1,15 @@
 package org.sigma.photostream.data;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Bundle;
 
 import org.sigma.photostream.stream.Stream;
 import org.sigma.photostream.stream.TumblrQuery;
@@ -207,6 +212,14 @@ public class DatabaseManager {
             TUS_QUERY,
             TUMBLR_QUERY,
             ID);
+
+    public static final String[] TABLES ={
+            TWITTER_QUERY,
+            TWITTER_STREAM,
+            TUMBLR_QUERY,
+            TUMBLR_STREAM
+            //TODO add more as they are created
+    };
 
     /**
      * This is the DateFormat used for storing and parsing Date objects
@@ -573,6 +586,14 @@ public class DatabaseManager {
         }
         cur.moveToFirst();
         return conv.convert(cur);
+    }
+
+    public void nukeDB(){
+        System.out.println("NUKING THE DATABASE!!!");
+        SQLiteDatabase db = openHelper.getWritableDatabase();
+        for (String table : TABLES) {
+            db.delete(table, null, null);
+        }
     }
 
     /**

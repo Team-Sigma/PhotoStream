@@ -74,4 +74,28 @@
     <string name="drawer_settings_title">Settings</string>
     <string name="lblWhatKind_text">What kind of stream?</string>
     <string name="btnNewStream_text">Create Stream</string>
+    <string name="cat_general">General</string>
+    <string name="set_batch_size">Batch Size</string>
+    <string name="set_do_geocode">Enable Geocode</string>
+    <string name="set_search_radius">Search Radius</string>
+    <string name="cat_query">Query</string>
+    <string name="lbl_preview">Preview</string>
+    <string name="from_user">From User</string>
+    <string name="from_list">From List</string>
+    <string name="question">Question</string>
+    <string name="lbl_since_date">Since Date:</string>
+    <string name="lbl_until_date">Until Date:</string>
+    <string name="enable">Enable</string>
+    <string name="change">Change</string>
+    <string name="stream_name">Stream Name</string>
+    <string name="attitude">Attitude</string>
+    <string name="exact_phrases">Phrases</string>
+    <string name="edit">Edit</string>
+    <string name="remove">Remove Phrases</string>
+    <string name="hashtags">Hashtags</string>
+    <string-array name="twitter_attitude_vals">
+        <item>None</item>
+        <item>Positive</item>
+        <item>Negative</item>
+    </string-array>
 </resources>

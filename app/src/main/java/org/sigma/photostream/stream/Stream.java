@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 
 import org.sigma.photostream.MainActivity;
 import org.sigma.photostream.R;
+import org.sigma.photostream.data.DatabaseManager;
 import org.sigma.photostream.data.Savable;
 import org.sigma.photostream.util.Receiver;
 
@@ -93,6 +94,11 @@ public abstract class Stream implements Savable {
     protected final void receiveFlotsam(Flotsam img){
         adapter.add(img);
         onReceiveFlotsam(img);
+    }
+
+    public void saveSelf(){
+        DatabaseManager dbm = DatabaseManager.getInstance();
+        dbm.save(this);
     }
 
     public List<Flotsam> getMany(int count){

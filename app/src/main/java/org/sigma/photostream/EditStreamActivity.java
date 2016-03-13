@@ -39,6 +39,9 @@ public class EditStreamActivity extends AppCompatActivity {
         if(stream != null){
             ScrollView root = (ScrollView) findViewById(R.id.EditStreamRoot);
             content = stream.getEditView(getApplicationContext(), root);
+            root.removeView(content);
+            root.removeAllViews();
+            root.addView(content);
         }
     }
 }

@@ -115,13 +115,17 @@ public class MainActivity extends AppCompatActivity
         navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        //DANGER!!! For testing purposes only!!
+//        databaseManager.nukeDB();
+        //DANGER!!
+
         fetchAvailableStreams();
         if(availableStreams.isEmpty()) {
-            //TwitterQuery query = new TwitterQuery();
-            TumblrQuery query = new TumblrQuery();
+            TwitterQuery query = new TwitterQuery();
+//            TumblrQuery query = new TumblrQuery();
             query.exactPhrases.add("food");
-            //TwitterStream test = new TwitterStream(this, query);
-            TumblrStream test = new TumblrStream(this, query);
+            TwitterStream test = new TwitterStream(this, query);
+//            TumblrStream test = new TumblrStream(this, query);
             databaseManager.save(test);
             availableStreams.add(test);
         }
@@ -133,7 +137,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void fetchAvailableStreams(){
-        //addAll(databaseManager.getAllTwitterStreams());
+        addAll(databaseManager.getAllTwitterStreams());
         addAll(databaseManager.getAllTumblrStreams());
         //TODO add more streams here
     }
