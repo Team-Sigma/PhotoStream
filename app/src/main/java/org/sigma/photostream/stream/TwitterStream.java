@@ -191,8 +191,6 @@ public class TwitterStream extends TembooStream {
         }
         this.geocodeRadius = geocodeRadius;
     }
-
-    @Override
     public ContentValues toContentValues() {
         ContentValues vals = new ContentValues();
         vals.put(DatabaseManager.ID, getID());

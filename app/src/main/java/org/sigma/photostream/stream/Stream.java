@@ -115,7 +115,7 @@ public abstract class Stream implements Savable {
 
     public void getUntilCountIs(int count){
         while(this.count() < count && this.hasMoreImages()){
-//            System.out.println("Count = " + this.count() + ", goal = " + count);
+            System.out.println("Count = " + this.count() + ", goal = " + count);
             next();
         }
     }

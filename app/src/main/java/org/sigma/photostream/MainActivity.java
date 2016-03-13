@@ -20,6 +20,8 @@ import android.widget.PopupWindow;
 import org.sigma.photostream.data.DatabaseManager;
 import org.sigma.photostream.stream.Flotsam;
 import org.sigma.photostream.stream.Stream;
+import org.sigma.photostream.stream.TumblrQuery;
+import org.sigma.photostream.stream.TumblrStream;
 import org.sigma.photostream.stream.TwitterQuery;
 import org.sigma.photostream.stream.TwitterStream;
 import org.sigma.photostream.util.Receiver;
@@ -115,9 +117,11 @@ public class MainActivity extends AppCompatActivity
 
         fetchAvailableStreams();
         if(availableStreams.isEmpty()) {
-            TwitterQuery query = new TwitterQuery();
-            query.exactPhrases.add("lunch");
-            TwitterStream test = new TwitterStream(this, query);
+            //TwitterQuery query = new TwitterQuery();
+            TumblrQuery query = new TumblrQuery();
+            query.exactPhrases.add("food");
+            //TwitterStream test = new TwitterStream(this, query);
+            TumblrStream test = new TumblrStream(this, query);
             databaseManager.save(test);
             availableStreams.add(test);
         }
@@ -129,7 +133,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void fetchAvailableStreams(){
-        addAll(databaseManager.getAllTwitterStreams());
+        //addAll(databaseManager.getAllTwitterStreams());
+        addAll(databaseManager.getAllTumblrStreams());
         //TODO add more streams here
     }
 
