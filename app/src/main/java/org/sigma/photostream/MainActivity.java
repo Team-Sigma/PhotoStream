@@ -20,6 +20,7 @@ import android.widget.PopupWindow;
 import org.sigma.photostream.data.DatabaseManager;
 import org.sigma.photostream.stream.Flotsam;
 import org.sigma.photostream.stream.Stream;
+import org.sigma.photostream.stream.StreamList;
 import org.sigma.photostream.stream.TumblrQuery;
 import org.sigma.photostream.stream.TumblrStream;
 import org.sigma.photostream.stream.TwitterQuery;
@@ -27,6 +28,7 @@ import org.sigma.photostream.stream.TwitterStream;
 import org.sigma.photostream.util.Receiver;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -45,13 +47,14 @@ public class MainActivity extends AppCompatActivity
     public FloatingActionButton fab = null;
     public DrawerLayout drawer = null;
     public NavigationView navigationView = null;
+    public Menu streamMenu = null;
 
     public int minimumImageCount = 30;
 
     private Stream currentStream = null;
     private boolean refilling = false;
 
-    public List<Stream> availableStreams = new ArrayList<>();
+    public StreamList availableStreams;
 
     private List<OnPauseListener> onPauseListeners = new LinkedList<>();
 
@@ -64,6 +67,18 @@ public class MainActivity extends AppCompatActivity
         mainActivity = this;
 
         databaseManager = DatabaseManager.getInstance(getApplicationContext());
+
+        navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+        streamMenu = navigationView.getMenu();
+        String title = getString(R.string.drawer_streams);
+        for(int i=0; i<streamMenu.size(); i++){
+            MenuItem item = streamMenu.getItem(i);
+            if(item.getTitle().equals(title)){
+                streamMenu = item.getSubMenu();
+            }
+        }
+        availableStreams = new StreamList(this);
 
         gridView = (GridView) findViewById(R.id.gridView);
         final int SAFETY = 10, BATCH_SIZE = 30;
@@ -112,9 +127,6 @@ public class MainActivity extends AppCompatActivity
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
         //DANGER!!! For testing purposes only!!
 //        databaseManager.nukeDB();
         //DANGER!!
@@ -130,6 +142,20 @@ public class MainActivity extends AppCompatActivity
             availableStreams.add(test);
         }
         setCurrentStream(availableStreams.get(0));
+
+        testCSV();
+    }
+
+    private void testCSV(){
+        List<String> orig = new LinkedList<>();
+        Collections.addAll(orig, "foo", "bar", "foo,bar", "\"foo\",bar");
+        String csv = DatabaseManager.toCSV(orig);
+        System.out.println("CSV = "+csv);
+        List<String> parsed = DatabaseManager.parseCSV(csv);
+        assert orig.size() == parsed.size();
+        for(int i=0; i<parsed.size();i++){
+            assert orig.get(i).equals(parsed.get(i));
+        }
     }
 
     private <E extends Stream> void addAll(Map<Long, E> map){

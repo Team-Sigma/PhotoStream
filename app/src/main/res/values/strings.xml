@@ -98,4 +98,7 @@
         <item>Positive</item>
         <item>Negative</item>
     </string-array>
+
+    <string name="action_done">Done</string>
+    <string name="action_cancel">Cancel</string>
 </resources>

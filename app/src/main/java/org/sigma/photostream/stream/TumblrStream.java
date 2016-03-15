@@ -16,6 +16,7 @@ import com.temboo.core.TembooException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.sigma.photostream.EditStreamActivity;
 import org.sigma.photostream.MainActivity;
 import org.sigma.photostream.R;
 import org.sigma.photostream.data.DatabaseManager;
@@ -137,7 +138,8 @@ public class TumblrStream extends TembooStream{
     }
 
     @Override
-    public View getEditView(Context context, ViewGroup parent) {
+    public View getEditView(EditStreamActivity activity, ViewGroup parent) {
+        final Context context = activity.getApplicationContext();
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         LinearLayout root = (LinearLayout) inflater.inflate(R.layout.edit_tumblr, parent, false);
         //TODO add in functionality

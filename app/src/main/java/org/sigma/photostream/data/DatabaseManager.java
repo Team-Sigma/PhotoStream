@@ -11,6 +11,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
 
+import org.sigma.photostream.MainActivity;
 import org.sigma.photostream.stream.Stream;
 import org.sigma.photostream.stream.TumblrQuery;
 import org.sigma.photostream.stream.TumblrStream;
@@ -589,11 +590,32 @@ public class DatabaseManager {
     }
 
     public void nukeDB(){
-        System.out.println("NUKING THE DATABASE!!!");
-        SQLiteDatabase db = openHelper.getWritableDatabase();
-        for (String table : TABLES) {
-            db.delete(table, null, null);
-        }
+        DialogFragment fragment = new DialogFragment(){
+            @Override
+            public Dialog onCreateDialog(Bundle savedInstanceState) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setTitle("Nuke the database?")
+                    .setMessage("This will delete all streams.")
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            System.out.println("NUKING THE DATABASE!!!");
+                            SQLiteDatabase db = openHelper.getWritableDatabase();
+                            for (String table : TABLES) {
+                                db.delete(table, null, null);
+                            }
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+                return builder.create();
+            }
+        };
+        fragment.show(MainActivity.mainActivity.getFragmentManager(), "nuke");
     }
 
     /**
@@ -631,7 +653,12 @@ public class DatabaseManager {
      */
     private <E extends Identifiable> long save(String table, String nullColumnHack, E obj, Converter<E,ContentValues> converter){
         ContentValues vals = converter.convert(obj);
-        return insert(table, nullColumnHack, vals);
+        if(vals.containsKey(NAME)){
+            System.out.println("Saving \""+vals.getAsString(NAME)+"\"\n"+vals.toString());
+        }
+        long res = insert(table, nullColumnHack, vals);
+        System.out.println("Insert returned: "+res);
+        return res;
     }
 
     /**

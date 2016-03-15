@@ -4,12 +4,14 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 
 import org.sigma.photostream.data.DatabaseManager;
 import org.sigma.photostream.stream.Stream;
 import org.sigma.photostream.stream.TwitterStream;
+import org.sigma.photostream.ui.ListEditorDialogFragment;
 
 public class EditStreamActivity extends AppCompatActivity {
 
@@ -17,6 +19,8 @@ public class EditStreamActivity extends AppCompatActivity {
     DatabaseManager databaseManager = null;
 
     View content = null;
+
+    public ListEditorDialogFragment fragment = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,11 +41,9 @@ public class EditStreamActivity extends AppCompatActivity {
         //TODO add tests for other streams
 
         if(stream != null){
-            ScrollView root = (ScrollView) findViewById(R.id.EditStreamRoot);
-            content = stream.getEditView(getApplicationContext(), root);
-            root.removeView(content);
-            root.removeAllViews();
-            root.addView(content);
+            ViewGroup root = (ViewGroup) findViewById(R.id.EditStreamRoot);
+            content = stream.getEditView(this, root);
+//            root.addView(content);
         }
     }
 }

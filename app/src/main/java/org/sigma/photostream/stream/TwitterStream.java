@@ -4,6 +4,7 @@ import android.app.DatePickerDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,11 +24,13 @@ import com.temboo.core.TembooException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.sigma.photostream.EditStreamActivity;
 import org.sigma.photostream.MainActivity;
 import org.sigma.photostream.R;
 import org.sigma.photostream.data.DatabaseManager;
-import org.sigma.photostream.ui.ListEditorDialog;
+import org.sigma.photostream.ui.ListEditorDialogFragment;
 import org.sigma.photostream.util.Receiver;
+import org.sigma.photostream.util.Transceiver;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -65,6 +68,8 @@ public class TwitterStream extends TembooStream {
 
     private List<Flotsam> images = new LinkedList<>();
     private volatile List<Flotsam> buffer = new LinkedList<>();
+
+    private View editView = null;
 
     public TwitterStream(long id, Context context, TwitterQuery query){
         super(id, context);
@@ -172,8 +177,8 @@ public class TwitterStream extends TembooStream {
                     btnChange.setVisibility(View.VISIBLE);
                 }else{
                     receiver.receive(null);
-                    lblPre.setVisibility(View.INVISIBLE);
-                    btnChange.setVisibility(View.INVISIBLE);
+                    lblPre.setVisibility(View.GONE);
+                    btnChange.setVisibility(View.GONE);
                 }
             }
         };
@@ -198,25 +203,30 @@ public class TwitterStream extends TembooStream {
         });
     }
 
-    private void setUpListEditor(final View root, int btnID, final List<String> initial, final Receiver<List<String>> receiver){
+    private void setUpListEditor(final EditStreamActivity activity, final String tag, final View root, int btnID, final Transceiver<List<String>> trans){
         Button btnEdit = (Button) root.findViewById(btnID);
         btnEdit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ListEditorDialog dialog = new ListEditorDialog(root.getContext(), initial);
-                dialog.setReceiver(receiver);
-                dialog.show();
+                activity.fragment = new ListEditorDialogFragment();
+                activity.fragment.setReceiver(trans);
+                activity.fragment.setItems(trans.give());
+                activity.fragment.show(activity.getSupportFragmentManager(), tag);
             }
         });
     }
 
     @Override
-    public View getEditView(final Context context, ViewGroup parent) {
+    public View getEditView(EditStreamActivity activity, ViewGroup parent) {
+        if(editView != null){ //This ensures that we only do this set-up once per stream
+            return editView;
+        }
+        final Context context = activity.getApplicationContext();
         final TwitterStream me = this;
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        ViewGroup root = (ViewGroup) inflater.inflate(R.layout.edit_twitter, parent);
+        editView = inflater.inflate(R.layout.edit_twitter, parent, true);
 
-        final EditText txtName = (EditText) root.findViewById(R.id.txtStreamName);
+        final EditText txtName = (EditText) editView.findViewById(R.id.txtStreamName);
         txtName.setText(this.name);
         txtName.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -229,7 +239,7 @@ public class TwitterStream extends TembooStream {
             }
         });
 
-        final EditText numBatchSize = (EditText) root.findViewById(R.id.numTweetBatchSize);
+        final EditText numBatchSize = (EditText) editView.findViewById(R.id.numTweetBatchSize);
         numBatchSize.setText(String.format("%d", tweetBatchSize));
         numBatchSize.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -250,8 +260,8 @@ public class TwitterStream extends TembooStream {
             }
         });
 
-        final CheckBox chkDoGeocode = (CheckBox) root.findViewById(R.id.chkDoGeocode);
-        final EditText numRadius = (EditText) root.findViewById(R.id.numRadius);
+        final CheckBox chkDoGeocode = (CheckBox) editView.findViewById(R.id.chkDoGeocode);
+        final EditText numRadius = (EditText) editView.findViewById(R.id.numRadius);
         chkDoGeocode.setChecked(doGeocode);
         chkDoGeocode.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -276,10 +286,10 @@ public class TwitterStream extends TembooStream {
             }
         });
 
-        final TextView lblPreview = (TextView) root.findViewById(R.id.lblPreview);
+        final TextView lblPreview = (TextView) editView.findViewById(R.id.lblPreview);
         updatePreview(lblPreview);
 
-        final EditText txtFromUser = (EditText) root.findViewById(R.id.txtFromUser);
+        final EditText txtFromUser = (EditText) editView.findViewById(R.id.txtFromUser);
         txtFromUser.setText(query.fromUser);
         txtFromUser.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -293,7 +303,7 @@ public class TwitterStream extends TembooStream {
             }
         });
 
-        final EditText txtFromList = (EditText) root.findViewById(R.id.txtFromList);
+        final EditText txtFromList = (EditText) editView.findViewById(R.id.txtFromList);
         txtFromList.setText(query.fromList);
         txtFromList.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -307,7 +317,7 @@ public class TwitterStream extends TembooStream {
             }
         });
 
-        final CheckBox chkQuestion = (CheckBox) root.findViewById(R.id.chkQuestion);
+        final CheckBox chkQuestion = (CheckBox) editView.findViewById(R.id.chkQuestion);
         chkQuestion.setChecked(query.question);
         chkQuestion.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -319,7 +329,7 @@ public class TwitterStream extends TembooStream {
             }
         });
 
-        setUpDatePicker(root,
+        setUpDatePicker(editView,
                 R.id.chkEnableSinceDate,
                 R.id.lblSinceDatePre,
                 R.id.btnSinceDateChange,
@@ -329,10 +339,12 @@ public class TwitterStream extends TembooStream {
                     public void receive(Date newval) {
                         me.query.sinceDate = newval;
                         me.query.saveSelf();
+                        saveToast(context);
+                        updatePreview(lblPreview);
                     }
                 });
 
-        setUpDatePicker(root,
+        setUpDatePicker(editView,
                 R.id.chkEnableUntilDate,
                 R.id.lblUntilDatePre,
                 R.id.btnUntilDateChange,
@@ -342,12 +354,14 @@ public class TwitterStream extends TembooStream {
                     public void receive(Date newval) {
                         me.query.untilDate = newval;
                         me.query.saveSelf();
+                        saveToast(context);
+                        updatePreview(lblPreview);
                     }
                 });
 
-        Spinner spnAttitude = (Spinner) root.findViewById(R.id.spnAttitude);
+        Spinner spnAttitude = (Spinner) editView.findViewById(R.id.spnAttitude);
         final ArrayAdapter<Attitude> attAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item);
-        for(Attitude att : new Attitude[]{null, Attitude.POSITIVE, Attitude.NEGATIVE}){
+        for(Attitude att : new Attitude[]{Attitude.NONE, Attitude.POSITIVE, Attitude.NEGATIVE}){
             if(att == me.query.attitude){
                 attAdapter.insert(att, 0);//Put in front
             }else{
@@ -360,39 +374,64 @@ public class TwitterStream extends TembooStream {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 me.query.attitude = attAdapter.getItem(position);
                 me.query.saveSelf();
+                saveToast(context);
+                updatePreview(lblPreview);
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 me.query.attitude = null;
                 me.query.saveSelf();
+                saveToast(context);
+                updatePreview(lblPreview);
             }
         });
 
-        setUpListEditor(root, R.id.btnEditExactPhrases, me.query.exactPhrases, new Receiver<List<String>>() {
+        setUpListEditor(activity, "exactPhrases", editView, R.id.btnEditExactPhrases, new Transceiver<List<String>>() {
+            @Override
+            public List<String> give() {
+                return me.query.exactPhrases;
+            }
+
             @Override
             public void receive(List<String> list) {
                 me.query.exactPhrases = list;
                 me.query.saveSelf();
+                saveToast(context);
+                updatePreview(lblPreview);
             }
         });
 
-        setUpListEditor(root, R.id.btnEditRemove, me.query.remove, new Receiver<List<String>>() {
+        setUpListEditor(activity, "remove", editView, R.id.btnEditRemove, new Transceiver<List<String>>() {
+            @Override
+            public List<String> give() {
+                return me.query.remove;
+            }
+
             @Override
             public void receive(List<String> list) {
-                me.query.remove = list;
+                me.query.exactPhrases = list;
                 me.query.saveSelf();
+                saveToast(context);
+                updatePreview(lblPreview);
             }
         });
 
-        setUpListEditor(root, R.id.btnEditHashtags, me.query.hashtags, new Receiver<List<String>>() {
+        setUpListEditor(activity, "hashtags",editView, R.id.btnEditHashtags, new Transceiver<List<String>>() {
+            @Override
+            public List<String> give() {
+                return me.query.hashtags;
+            }
+
             @Override
             public void receive(List<String> list) {
-                me.query.hashtags = list;
+                me.query.exactPhrases = list;
                 me.query.saveSelf();
+                saveToast(context);
+                updatePreview(lblPreview);
             }
         });
-        return root;
+        return editView;
     }
 
     @Override
@@ -433,7 +472,7 @@ public class TwitterStream extends TembooStream {
     }
 
     public enum Attitude{
-        POSITIVE(":)"), NEGATIVE(":(");
+        POSITIVE(":)"), NEGATIVE(":("), NONE("");
         public final String face;
         Attitude(String face){
             this.face = face;

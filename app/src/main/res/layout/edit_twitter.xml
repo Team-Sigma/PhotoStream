@@ -4,7 +4,8 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:scrollIndicators="right"
-              style="@style/AppTheme">
+              style="@style/AppTheme"
+              android:theme="@style/AppTheme">
 
     <TextView
         android:layout_width="wrap_content"
@@ -12,13 +13,19 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="@string/cat_general"
         android:id="@+id/lblGeneral"
-        android:layout_marginLeft="10dp"/>
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/txtStreamName"
-        android:hint="@string/stream_name"/>
+        android:hint="@string/stream_name"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <EditText
         android:layout_width="match_parent"
@@ -30,7 +37,10 @@
         android:enabled="true"
         android:numeric="integer"
         android:hint="@string/set_batch_size"
-        android:elegantTextHeight="true"/>
+        android:elegantTextHeight="true"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <CheckBox
         android:layout_width="wrap_content"
@@ -38,7 +48,10 @@
         android:text="@string/set_do_geocode"
         android:id="@+id/chkDoGeocode"
         android:enabled="true"
-        android:elegantTextHeight="true"/>
+        android:elegantTextHeight="true"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <EditText
         android:layout_width="match_parent"
@@ -49,7 +62,10 @@
         android:numeric="integer"
         android:hint="@string/set_search_radius"
         android:editable="true"
-        android:elegantTextHeight="true"/>
+        android:elegantTextHeight="true"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -57,7 +73,10 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="@string/cat_query"
         android:id="@+id/lblQuery"
-        android:layout_marginLeft="10dp"/>
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -65,7 +84,10 @@
         android:text="@string/lbl_preview"
         android:id="@+id/lblPreview"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_marginLeft="10dp"/>
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <EditText
         android:layout_width="fill_parent"
@@ -73,7 +95,10 @@
         android:id="@+id/txtFromUser"
         android:editable="true"
         android:elegantTextHeight="true"
-        android:hint="@string/from_user"/>
+        android:hint="@string/from_user"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <EditText
         android:layout_width="fill_parent"
@@ -81,14 +106,20 @@
         android:id="@+id/txtFromList"
         android:editable="true"
         android:elegantTextHeight="true"
-        android:hint="@string/from_list"/>
+        android:hint="@string/from_list"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <CheckBox
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/question"
         android:id="@+id/chkQuestion"
-        android:elegantTextHeight="true"/>
+        android:elegantTextHeight="true"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -96,32 +127,45 @@
         android:text="@string/lbl_since_date"
         android:id="@+id/lblSinceDate"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_marginLeft="10dp"/>
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <LinearLayout
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme">
 
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/enable"
-            android:id="@+id/chkEnableSinceDate"/>
+            android:id="@+id/chkEnableSinceDate"
+            android:theme="@style/AppTheme"
+            android:textColor="#000000"
+            android:textColorHint="#444444"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:id="@+id/lblSinceDatePre"
-            android:visibility="invisible"/>
+            android:visibility="gone"
+            android:theme="@style/AppTheme"
+            android:textColor="#000000"
+            android:textColorHint="#444444"/>
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/change"
             android:id="@+id/btnSinceDateChange"
-            android:visibility="invisible"/>
+            android:visibility="gone"
+            android:theme="@style/AppTheme"
+            android:textColor="#000000"
+            android:textColorHint="#444444"/>
     </LinearLayout>
 
     <TextView
@@ -130,32 +174,45 @@
         android:text="@string/lbl_until_date"
         android:id="@+id/lblUntilDate"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_marginLeft="10dp"/>
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <LinearLayout
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme">
 
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/enable"
-            android:id="@+id/chkEnableUntilDate"/>
+            android:id="@+id/chkEnableUntilDate"
+            android:theme="@style/AppTheme"
+            android:textColor="#000000"
+            android:textColorHint="#444444"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:id="@+id/lblUntilDatePre"
-            android:visibility="invisible"/>
+            android:visibility="gone"
+            android:theme="@style/AppTheme"
+            android:textColor="#000000"
+            android:textColorHint="#444444"/>
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/change"
             android:id="@+id/btnUntilDateChange"
-            android:visibility="invisible"/>
+            android:visibility="gone"
+            android:theme="@style/AppTheme"
+            android:textColor="#000000"
+            android:textColorHint="#444444"/>
     </LinearLayout>
 
     <TextView
@@ -164,13 +221,16 @@
         android:text="@string/attitude"
         android:id="@+id/lblAttitude"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_marginLeft="10dp"/>
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <Spinner
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/spnAttitude"
-        />
+        android:theme="@style/AppTheme"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -178,13 +238,19 @@
         android:text="@string/exact_phrases"
         android:id="@+id/lblExactPhrases"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_marginLeft="10dp"/>
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/btnEditExactPhrases"
-        android:text="@string/edit"/>
+        android:text="@string/edit"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -192,13 +258,19 @@
         android:text="@string/remove"
         android:id="@+id/lblRemove"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_marginLeft="10dp"/>
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/btnEditRemove"
-        android:text="@string/edit"/>
+        android:text="@string/edit"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -206,12 +278,18 @@
         android:text="@string/hashtags"
         android:id="@+id/lblHashtags"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_marginLeft="10dp"/>
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/btnEditHashtags"
-        android:text="@string/edit"/>
+        android:text="@string/edit"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
 </LinearLayout>
