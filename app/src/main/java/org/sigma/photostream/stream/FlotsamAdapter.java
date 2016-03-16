@@ -64,7 +64,7 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
                 }
             });
         }
-        f.getImage();
+//        f.getImage();
         return convertView;
     }
 

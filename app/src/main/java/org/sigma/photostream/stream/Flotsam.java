@@ -16,8 +16,17 @@ import android.widget.TextView;
 
 import org.sigma.photostream.MainActivity;
 import org.sigma.photostream.R;
+import org.sigma.photostream.util.CacheVal;
+import org.sigma.photostream.util.Giver;
+import org.sigma.photostream.util.Util;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -32,9 +41,35 @@ public class Flotsam {
 
     public static final boolean DEFAULT_LAZINESS = false;
 
-    private static final Map<URL, Bitmap> KNOWN_IMAGES = new HashMap<>();
+    private static File DUMP_FOLDER = null;
 
-    private Bitmap img;
+    private static File getDumpFolder(){
+        if(DUMP_FOLDER != null){
+            return DUMP_FOLDER;
+        }
+        File res = new File(MainActivity.mainActivity.getFilesDir(),"img_dump");
+        System.out.println("Dump folder: " + res.getAbsolutePath());
+        Util.debugAssert(res.mkdirs() || res.isDirectory());
+        for(File file : res.listFiles()){
+            if(!file.delete()){
+                System.out.println("Could not delete: "+file.getAbsolutePath());
+            }
+        }
+        DUMP_FOLDER = res;
+        return res;
+    }
+
+    private static final Map<URL, File> KNOWN_IMAGES = new HashMap<>();
+
+    private File src = null;
+    private CacheVal<Bitmap> img = new CacheVal<>(new Giver<Bitmap>() {
+        @Override
+        public Bitmap give() {
+            if(src == null)
+                return null;
+            return BitmapFactory.decodeFile(src.getAbsolutePath());
+        }
+    });
     public String name = "";
     public String description = "";
 
@@ -46,20 +81,6 @@ public class Flotsam {
     private View popupView = null;
 
     private List<ImageUpdateListener> imageUpdateListeners = new LinkedList<>();
-
-    public Flotsam(Bitmap img){
-        this.img = img;
-    }
-
-    public Flotsam(Bitmap img, String name){
-        this(img);
-        this.name = name;
-    }
-
-    public Flotsam(Bitmap img, String name, String description){
-        this(img, name);
-        this.description = description;
-    }
 
     public Flotsam(URL src, boolean lazy){
         this.lazy = lazy;
@@ -119,13 +140,7 @@ public class Flotsam {
     }
 
     public Bitmap getImage() {
-        if(img == null && lazy && downloader.getStatus() != AsyncTask.Status.PENDING){
-            if(downloader.getStatus() == AsyncTask.Status.FINISHED){
-                downloader = new Downloader(this);
-            }
-            downloader.execute(source);
-        }
-        return img;
+        return img.get();
     }
 
     public void addImageUpdateListener(ImageUpdateListener listener){
@@ -164,10 +179,10 @@ public class Flotsam {
         this.addImageUpdateListener(new ImageUpdateListener() {
             @Override
             public void onImageUpdate(Flotsam flotsam) {
-                imgFlotsam.setImageBitmap(flotsam.img);
+                imgFlotsam.setImageBitmap(flotsam.getImage());
             }
         });
-        imgFlotsam.setImageBitmap(this.img);
+        imgFlotsam.setImageBitmap(this.getImage());
         imgFlotsam.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -196,7 +211,7 @@ public class Flotsam {
         void onImageUpdate(Flotsam flotsam);
     }
 
-    private class Downloader extends AsyncTask<URL, Integer, Bitmap>{
+    private class Downloader extends AsyncTask<URL, Integer, File>{
 
         private Flotsam parent;
 
@@ -205,24 +220,46 @@ public class Flotsam {
         }
 
         @Override
-        protected Bitmap doInBackground(URL... params) {
+        protected File doInBackground(URL... params) {
             if(KNOWN_IMAGES.containsKey(params[0])){
                 return KNOWN_IMAGES.get(params[0]);
             }
-            System.out.println("Downloading image at "+params[0].toString());
-            Bitmap res = null;
+            String[] dotParts = params[0].toString().split("\\.");
+            String suffix = dotParts[dotParts.length-1];
+            File dest;
             try {
-                res = BitmapFactory.decodeStream(params[0].openStream());
-                KNOWN_IMAGES.put(params[0], res);
+                dest = File.createTempFile("img"+Math.random()*10000000, suffix, getDumpFolder());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+            System.out.println("Downloading image at "+params[0].toString()+" to "+dest.getAbsolutePath());
+            try {
+                InputStream input = params[0].openStream();
+                FileOutputStream output = new FileOutputStream(dest);
+                byte data[] = new byte[4096];
+                int count;
+                while ((count = input.read(data)) != -1) {
+                    // allow canceling with back button
+                    if (isCancelled()) {
+                        input.close();
+                        return null;
+                    }
+                    output.write(data, 0, count);
+                }
+                input.close();
+                output.close();
+                KNOWN_IMAGES.put(params[0], dest);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return res;
+            return dest;
         }
 
         @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            parent.img = bitmap;
+        protected void onPostExecute(File src) {
+            parent.src = src;
+            parent.img.load();
             for(ImageUpdateListener listener : imageUpdateListeners){
                 listener.onImageUpdate(parent);
             }

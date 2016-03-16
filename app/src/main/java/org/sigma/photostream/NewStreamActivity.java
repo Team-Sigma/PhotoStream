@@ -22,6 +22,7 @@ public class NewStreamActivity extends AppCompatActivity {
 
     ArrayAdapter<String> adapter;
     Spinner spinner = null;
+    EditText txtStreamName = null;
 
     private String current = null;
 
@@ -57,6 +58,16 @@ public class NewStreamActivity extends AppCompatActivity {
                 create();
             }
         });
+
+        txtStreamName = (EditText) findViewById(R.id.txtStreamName);
+        txtStreamName.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if(!hasFocus) {
+                    MainActivity.mainActivity.checkName(txtStreamName, null);
+                }
+            }
+        });
     }
 
     private void create(){
@@ -72,7 +83,6 @@ public class NewStreamActivity extends AppCompatActivity {
             s = new TwitterStream();
         }
         if(s != null){
-            EditText txtStreamName = (EditText) findViewById(R.id.txtStreamName);
             s.name = txtStreamName.getText().toString();
             MainActivity parent = (MainActivity) this.getParent();
             parent.startEditStreamActivity(s);

@@ -59,6 +59,8 @@ public abstract class Stream implements Savable {
         return name;
     }
 
+
+
     /**
      * Discard all images and restart
      */

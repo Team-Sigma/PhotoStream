@@ -116,7 +116,7 @@ public class TwitterStream extends TembooStream {
     public void refresh() {
         images = new LinkedList<>();
         buffer = new LinkedList<>();
-        fetchMore();
+//        fetchMore();
     }
 
     @Override
@@ -231,7 +231,7 @@ public class TwitterStream extends TembooStream {
         txtName.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
-                if(!hasFocus) {
+                if(!hasFocus && MainActivity.mainActivity.checkName(txtName, me)) {
                     me.name = txtName.getText().toString();
                     saveSelf();
                     saveToast(context);

@@ -31,7 +31,8 @@ public class StreamList extends ArrayList<Stream> {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 parent.setCurrentStream(stream);
-                return false;
+                parent.closeDrawer();
+                return true;
             }
         });
         menuItemMap.put(stream, item);

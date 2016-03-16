@@ -14,6 +14,8 @@
     <string name="drawer_streams">Streams</string>
     <string name="title_activity_global_settings">Settings</string>
 
+    <string name="error_name_taken">Sorry! The name "%s" has been taken!</string>
+
     <!-- Strings related to Settings -->
 
     <!-- Example General settings -->
@@ -101,4 +103,8 @@
 
     <string name="action_done">Done</string>
     <string name="action_cancel">Cancel</string>
+    <string name="pref_title_default_stream">Default Stream</string>
+    <string name="pref_desc_default_stream">Select the stream that will open on startup</string>
+    <string name="pref_title_nuke_db">Nuke the Database</string>
+    <string name="pref_desc_nuke_db">Deletes all streams and queries in the database</string>
 </resources>

@@ -1,6 +1,7 @@
 package org.sigma.photostream;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -14,8 +15,10 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AbsListView;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.PopupWindow;
+import android.widget.Toast;
 
 import org.sigma.photostream.data.DatabaseManager;
 import org.sigma.photostream.stream.Flotsam;
@@ -37,6 +40,10 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     public static final String EXTRA_STREAM_ID = "EXTRA_STREAM_ID";
     public static final String EXTRA_STREAM_TYPE = "EXTRA_STREAM_TYPE";
+
+    public static final String PREFS_NAME = "PhotoStreamPrefs";
+    public static final String PREF_DEFAULT_STREAM = "DefaultStream";
+
     public static MainActivity mainActivity = null;
 
     public DatabaseManager databaseManager = null;
@@ -57,6 +64,10 @@ public class MainActivity extends AppCompatActivity
     public StreamList availableStreams;
 
     private List<OnPauseListener> onPauseListeners = new LinkedList<>();
+
+    protected SharedPreferences getSharedPreferences(){
+        return getSharedPreferences(PREFS_NAME, 0);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,6 +143,7 @@ public class MainActivity extends AppCompatActivity
         //DANGER!!
 
         fetchAvailableStreams();
+        Stream res = null;
         if(availableStreams.isEmpty()) {
             TwitterQuery query = new TwitterQuery();
 //            TumblrQuery query = new TumblrQuery();
@@ -140,10 +152,44 @@ public class MainActivity extends AppCompatActivity
 //            TumblrStream test = new TumblrStream(this, query);
             databaseManager.save(test);
             availableStreams.add(test);
+            res = test;
+        }else{
+            String defStream = getSharedPreferences().getString(PREF_DEFAULT_STREAM, null);
+            if(defStream == null){
+                res = availableStreams.get(0);
+            }else{
+                res = getStreamByName(defStream);
+            }
         }
-        setCurrentStream(availableStreams.get(0));
+        setCurrentStream(res);
 
         testCSV();
+    }
+
+    public boolean checkName(EditText txtStreamName, Stream stream){
+        String name = txtStreamName.getText().toString();
+        Stream match = getStreamByName(name);
+        if(match != null && !match.equals(stream)){
+            String msg = getString(R.string.error_name_taken);
+            Toast.makeText(getApplicationContext(),
+                    String.format(msg, name), Toast.LENGTH_LONG).show();
+            txtStreamName.requestFocus();
+            return false;
+        }
+        return true;
+    }
+
+    public boolean isNameTaken(String name){
+        return getStreamByName(name) != null;
+    }
+
+    public Stream getStreamByName(String name){
+        for(Stream stream : availableStreams){
+            if(stream.getName().equals(name)){
+                return stream;
+            }
+        }
+        return null;
     }
 
     private void testCSV(){
@@ -171,11 +217,19 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onBackPressed() {
         System.out.println("Back pressed!");
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
+        if (isDrawerOpen()) {
+            closeDrawer();
         }else {
             super.onBackPressed();
         }
+    }
+
+    public boolean isDrawerOpen(){
+        return drawer.isDrawerOpen(GravityCompat.START);
+    }
+
+    public void closeDrawer(){
+        drawer.closeDrawer(GravityCompat.START);
     }
 
     @Override
@@ -210,17 +264,25 @@ public class MainActivity extends AppCompatActivity
         startFetching();
     }
 
+    public void startNewStreamActivity(){
+        Intent intent = new Intent(this, NewStreamActivity.class);
+        startActivity(intent);
+    }
+
+    public void startGlobalSettingsActivity(){
+        Intent intent = new Intent(this, GlobalSettingsActivity.class);
+        startActivity(intent);
+    }
+
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
         if (id == R.id.nav_add) {
-            Intent intent = new Intent(this, NewStreamActivity.class);
-            startActivity(intent);
+            startNewStreamActivity();
         }else if( id == R.id.nav_settings){
-            Intent intent = new Intent(this, GlobalSettingsActivity.class);
-            startActivity(intent);
+            startGlobalSettingsActivity();
         }
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -246,6 +308,10 @@ public class MainActivity extends AppCompatActivity
 
     public void setCurrentStream(Stream stream) {
         if(stream != null) {
+            if(currentStream != null) {
+                currentStream.getFlotsamAdapter().removeAll();
+                currentStream.refresh();
+            }
             this.currentStream = stream;
             gridView.setAdapter(stream.getFlotsamAdapter());
             startFetching();
