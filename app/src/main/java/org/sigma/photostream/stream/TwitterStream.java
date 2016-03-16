@@ -39,6 +39,8 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Tobias Highfill
@@ -66,8 +68,7 @@ public class TwitterStream extends TembooStream {
     private int remaining = 100;
     private long resetAt = 0;
 
-    private List<Flotsam> images = new LinkedList<>();
-    private volatile List<Flotsam> buffer = new LinkedList<>();
+    private Set<Double> ids = new TreeSet<>();
 
     private View editView = null;
 
@@ -108,49 +109,21 @@ public class TwitterStream extends TembooStream {
         this(new TwitterQuery());
     }
 
-    private void fetchMore(){
+    @Override
+    protected void fetchMore(){
         new TwitterFetcher(this).execute(query.buildQuery());
     }
 
     @Override
     public void refresh() {
-        images = new LinkedList<>();
-        buffer = new LinkedList<>();
+
+        ids = new TreeSet<>();
 //        fetchMore();
     }
 
     @Override
     public boolean hasMoreImages() {
         return true;
-    }
-
-    @Override
-    public int count() {
-        return images.size();
-    }
-
-    @Override
-    public Flotsam next() {
-        Flotsam res = null;
-        if(!buffer.isEmpty()){
-            res = buffer.remove(0);
-        }
-        if(buffer.size() <= LOW_BUFFER){
-            if(this.getStatus() != Stream.DOWNLOADING_IMAGES) {
-                fetchMore();
-            }
-            if(buffer.isEmpty()){
-                while (buffer.isEmpty()){}
-                res = buffer.remove(0);
-            }
-        }
-        images.add(res);
-        return res;
-    }
-
-    @Override
-    public List<Flotsam> toList() {
-        return new LinkedList<>(images); //Copies the list so no-one can mess with it
     }
 
     private void saveToast(Context context){
@@ -434,12 +407,6 @@ public class TwitterStream extends TembooStream {
         return editView;
     }
 
-    @Override
-    protected void onReceiveFlotsam(Flotsam img) {
-        buffer.add(img);
-        this.sendUpdateToListeners(img);
-    }
-
     public int getGeocodeRadius() {
         return geocodeRadius;
     }
@@ -521,6 +488,36 @@ public class TwitterStream extends TembooStream {
             return null;
         }
 
+        private void processTweet(JSONObject tweet, String urlstr) throws JSONException, MalformedURLException {
+            double id = tweet.getDouble("id");
+            int retweets = tweet.getInt("retweet_count");
+            String retweetedStatus = "retweeted_status";
+            if(tweet.has(retweetedStatus)){
+                //This is a retweet, recursively call to get to root
+                processTweet(tweet.getJSONObject(retweetedStatus), urlstr);
+            }else if(ids.add(id)){ //Returns true if set is modified
+                //This will approach 1 for large values
+                double weight = 1.0 - Math.pow(1.0 - 1 / 50.0, retweets+1);
+                //Tweet has a photo, download it asynchronously
+                String user = tweet.getJSONObject("user").getString("name");
+                String name = "Tweet from " + user;
+                //Use tweet body as description
+                String description = tweet.getString("text");
+                URL url = new URL(urlstr);
+                Flotsam.ImageUpdateListener listener = new Flotsam.ImageUpdateListener() {
+                    @Override
+                    public void onImageUpdate(Flotsam flotsam) {
+                        parent.endDLThread();
+                        flotsam.removeImageUpdateListener(this);
+                    }
+                };
+                Flotsam res = new Flotsam(url, name, description, listener, false);
+                res.setWeight(weight);
+                parent.receiveFlotsam(res);
+                parent.newDLThread();
+            }
+        }
+
         @Override
         protected void onPostExecute(JSONObject root) {
             parent.setStatus(NORMAL);
@@ -530,7 +527,6 @@ public class TwitterStream extends TembooStream {
                 System.out.println("Processing "+tweets.length()+" tweets...");
                 for(int i=0; i < tweets.length(); i++){
                     JSONObject tweet = tweets.getJSONObject(i);
-                    String user = tweet.getJSONObject("user").getString("name");
                     //Need to check if tweet contains a photo
                     //The filter should have taken care of it but better safe than sorry
                     try {
@@ -538,19 +534,7 @@ public class TwitterStream extends TembooStream {
                         for(int j = 0; j < media.length(); j++){
                             JSONObject curr = media.getJSONObject(j);
                             if(curr.getString("type").equals("photo")){
-                                //Tweet has a photo, download it asynchronously
-                                //Use tweet body as description
-                                String name = "Tweet from " + user;
-                                String description = tweet.getString("text");
-                                URL url = new URL(curr.getString("media_url_https"));
-                                Flotsam.ImageUpdateListener listener = new Flotsam.ImageUpdateListener() {
-                                    @Override
-                                    public void onImageUpdate(Flotsam flotsam) {
-                                        parent.endDLThread();
-                                    }
-                                };
-                                parent.receiveFlotsam(new Flotsam(url, name, description, listener, false));
-                                parent.newDLThread();
+                                processTweet(tweet, curr.getString("media_url_https"));
                                 break;
                             }
                         }

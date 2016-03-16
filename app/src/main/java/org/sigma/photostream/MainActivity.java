@@ -22,6 +22,7 @@ import android.widget.Toast;
 
 import org.sigma.photostream.data.DatabaseManager;
 import org.sigma.photostream.stream.Flotsam;
+import org.sigma.photostream.stream.FlotsamAdapter;
 import org.sigma.photostream.stream.Stream;
 import org.sigma.photostream.stream.StreamList;
 import org.sigma.photostream.stream.TumblrQuery;
@@ -313,7 +314,7 @@ public class MainActivity extends AppCompatActivity
                 currentStream.refresh();
             }
             this.currentStream = stream;
-            gridView.setAdapter(stream.getFlotsamAdapter());
+            stream.getFlotsamAdapter().bindToView(gridView);
             startFetching();
         }else{
             throw new NullPointerException("CurrentStream should not be null!");
@@ -330,6 +331,12 @@ public class MainActivity extends AppCompatActivity
             listener.onPause(this);
         }
         super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Flotsam.deleteTempFiles();
+        super.onDestroy();
     }
 
     public interface OnPauseListener{

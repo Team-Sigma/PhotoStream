@@ -9,7 +9,7 @@ import com.temboo.core.TembooSession;
 /**
  * @author Tobias Highfill
  */
-public abstract class TembooStream extends Stream{
+public abstract class TembooStream extends BufferedStream{
     private static TembooSession session = null;
 
     public TembooStream(long id, Context context) {

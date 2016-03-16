@@ -11,14 +11,18 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.sigma.photostream.stream.RedditStream;
 import org.sigma.photostream.stream.Stream;
+import org.sigma.photostream.stream.TumblrStream;
 import org.sigma.photostream.stream.TwitterStream;
 
 public class NewStreamActivity extends AppCompatActivity {
 
     private static final String TWITTER = "Twitter";
+    private static final String TUMBLR = "Tumblr";
+    private static final String REDDIT = "Reddit";
 
-    private static final String[] STREAM_TYPES = {TWITTER};
+    private static final String[] STREAM_TYPES = {TWITTER, TUMBLR, REDDIT};
 
     ArrayAdapter<String> adapter;
     Spinner spinner = null;
@@ -81,7 +85,12 @@ public class NewStreamActivity extends AppCompatActivity {
         }
         if(current.equals(TWITTER)){
             s = new TwitterStream();
+        }else if(current.equals(TUMBLR)){
+            s = new TumblrStream();
+        }else if(current.equals(REDDIT)){
+            s = new RedditStream();
         }
+        //TODO: Add more as they are created
         if(s != null){
             s.name = txtStreamName.getText().toString();
             MainActivity parent = (MainActivity) this.getParent();

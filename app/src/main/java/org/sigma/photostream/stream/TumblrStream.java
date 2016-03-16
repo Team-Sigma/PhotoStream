@@ -52,9 +52,6 @@ public class TumblrStream extends TembooStream{
     private int remaining = 100;
     private long resetAt = 0;
 
-    private List<Flotsam> images = new LinkedList<>();
-    private volatile List<Flotsam> buffer = new LinkedList<>();
-
     public TumblrStream(long id, Context context, TumblrQuery query){
         super(id, context);
         this.query = query;
@@ -92,49 +89,13 @@ public class TumblrStream extends TembooStream{
         this(new TumblrQuery());
     }
 
-    private void fetchMore(){
+    protected void fetchMore(){
         new TumblrFetcher(this).execute(query.buildQuery());
-    }
-
-    @Override
-    public void refresh() {
-        images = new LinkedList<>();
-        buffer = new LinkedList<>();
-        fetchMore();
     }
 
     @Override
     public boolean hasMoreImages() {
         return true;
-    }
-
-    @Override
-    public int count() {
-        return images.size();
-    }
-
-    @Override
-    public Flotsam next() {
-        Flotsam res = null;
-        if(!buffer.isEmpty()){
-            res = buffer.remove(0);
-        }
-        if(buffer.size() <= LOW_BUFFER){
-            if(this.getStatus() != Stream.DOWNLOADING_IMAGES) {
-                fetchMore();
-            }
-            if(buffer.isEmpty()){
-                while (buffer.isEmpty()){}
-                res = buffer.remove(0);
-            }
-        }
-        images.add(res);
-        return res;
-    }
-
-    @Override
-    public List<Flotsam> toList() {
-        return new LinkedList<>(images); //Copies the list so no-one can mess with it
     }
 
     @Override
@@ -144,12 +105,6 @@ public class TumblrStream extends TembooStream{
         LinearLayout root = (LinearLayout) inflater.inflate(R.layout.edit_tumblr, parent, false);
         //TODO add in functionality
         return root;
-    }
-
-    @Override
-    protected void onReceiveFlotsam(Flotsam img) {
-        buffer.add(img);
-        this.sendUpdateToListeners(img);
     }
 
     @Override

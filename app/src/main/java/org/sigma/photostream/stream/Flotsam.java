@@ -43,20 +43,27 @@ public class Flotsam {
 
     private static File DUMP_FOLDER = null;
 
-    private static File getDumpFolder(){
+    public static File getDumpFolder(){
         if(DUMP_FOLDER != null){
             return DUMP_FOLDER;
         }
-        File res = new File(MainActivity.mainActivity.getFilesDir(),"img_dump");
+        //Util.debugAssert(DUMP_FOLDER == null);
+        File res = new File(MainActivity.mainActivity.getFilesDir(), "img_dump");
         System.out.println("Dump folder: " + res.getAbsolutePath());
         Util.debugAssert(res.mkdirs() || res.isDirectory());
-        for(File file : res.listFiles()){
+        DUMP_FOLDER = res;
+        deleteTempFiles();
+        return res;
+    }
+
+    public static void deleteTempFiles(){
+        Util.debugAssert(DUMP_FOLDER != null);
+        System.out.println("Clearing dump folder...");
+        for(File file : DUMP_FOLDER.listFiles()){
             if(!file.delete()){
                 System.out.println("Could not delete: "+file.getAbsolutePath());
             }
         }
-        DUMP_FOLDER = res;
-        return res;
     }
 
     private static final Map<URL, File> KNOWN_IMAGES = new HashMap<>();
@@ -72,6 +79,8 @@ public class Flotsam {
     });
     public String name = "";
     public String description = "";
+
+    private double weight = 0;
 
     public boolean lazy = DEFAULT_LAZINESS;
 
@@ -139,12 +148,53 @@ public class Flotsam {
         this.description = description;
     }
 
+    public Flotsam(String src, String name, String description, ImageUpdateListener listener) throws MalformedURLException {
+        this(src, name, description);
+        addImageUpdateListener(listener);
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(double weight) {
+        if(weight >= 0 && weight <= 1) {
+            this.weight = weight;
+        }else{
+            throw new IllegalArgumentException("Weight must be between 0 and 1");
+        }
+    }
+
     public Bitmap getImage() {
-        return img.get();
+        return img.getIfLoaded(null);
+    }
+
+    public boolean isLoaded(){
+        return img.isLoaded();
+    }
+
+    public void unLoad(){
+        img.unLoad();
+        notifyListeners();
+    }
+
+    public void load(){
+        img.load();
+        notifyListeners();
     }
 
     public void addImageUpdateListener(ImageUpdateListener listener){
         imageUpdateListeners.add(listener);
+    }
+
+    public void removeImageUpdateListener(ImageUpdateListener listener){
+        imageUpdateListeners.remove(listener);
+    }
+
+    private void notifyListeners() {
+        for(ImageUpdateListener listener : imageUpdateListeners){
+            listener.onImageUpdate(this);
+        }
     }
 
     protected View getPopupView(Context context){
@@ -225,10 +275,10 @@ public class Flotsam {
                 return KNOWN_IMAGES.get(params[0]);
             }
             String[] dotParts = params[0].toString().split("\\.");
-            String suffix = dotParts[dotParts.length-1];
+            String suffix = '.' + dotParts[dotParts.length-1];
             File dest;
             try {
-                dest = File.createTempFile("img"+Math.random()*10000000, suffix, getDumpFolder());
+                dest = File.createTempFile("img", suffix, getDumpFolder());
             } catch (IOException e) {
                 e.printStackTrace();
                 return null;
@@ -260,9 +310,7 @@ public class Flotsam {
         protected void onPostExecute(File src) {
             parent.src = src;
             parent.img.load();
-            for(ImageUpdateListener listener : imageUpdateListeners){
-                listener.onImageUpdate(parent);
-            }
+            parent.notifyListeners();
         }
     }
 }

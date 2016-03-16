@@ -11,7 +11,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
 
+import net.dean.jraw.paginators.Sorting;
+
 import org.sigma.photostream.MainActivity;
+import org.sigma.photostream.stream.RedditStream;
 import org.sigma.photostream.stream.Stream;
 import org.sigma.photostream.stream.TumblrQuery;
 import org.sigma.photostream.stream.TumblrStream;
@@ -51,6 +54,10 @@ import java.util.StringTokenizer;
  *     <tr>
  *         <td>3</td>
  *         <td>Added Tumblr Stream, Tumblr query tables</td>
+ *     </tr>
+ *     <tr>
+ *         <td>4</td>
+ *         <td>Added Reddit Stream table</td>
  *     </tr>
  * </table>
  *
@@ -92,7 +99,7 @@ public class DatabaseManager {
     /**
      * The current database version. See the versioning info above.
      */
-    public static final int DATABASE_VERSION = 3;
+    public static final int DATABASE_VERSION = 4;
 
     /**
      * The full type definition for primary keys in this DB including constraints.
@@ -214,11 +221,31 @@ public class DatabaseManager {
             TUMBLR_QUERY,
             ID);
 
+    /**
+     * The name of the table storing the Reddit Streams
+     */
+    public static final String REDDIT_STREAM = "RedditStream";
+    //The column names
+    public static final String RED_SUBREDDIT = "subreddit";
+    public static final String RED_ALLOW_NSFW = "allowNSFW";
+    public static final String RED_SORTING = "sorting";
+    //The creation query
+    public static final String CREATE_REDDIT_STREAM = String.format(
+            "CREATE TABLE IF NOT EXISTS %s (%s %s, %s TEXT, %s TEXT, %s INTEGER, %s TEXT)",
+            REDDIT_STREAM,
+            ID, PRIMARY_KEY_DEF,
+            NAME,
+            RED_SUBREDDIT,
+            RED_ALLOW_NSFW,
+            RED_SORTING
+    );
+
     public static final String[] TABLES ={
             TWITTER_QUERY,
             TWITTER_STREAM,
             TUMBLR_QUERY,
-            TUMBLR_STREAM
+            TUMBLR_STREAM,
+            REDDIT_STREAM
             //TODO add more as they are created
     };
 
@@ -327,7 +354,7 @@ public class DatabaseManager {
     private final Converter<Cursor, TumblrStream> CURSOR_TUMBLR_STREAM_CONVERTER = new Converter<Cursor, TumblrStream>() {
         @Override
         public TumblrStream convert(Cursor cur) {
-            long thisID = cur.getLong(cur.getColumnIndex("id"));
+            long thisID = cur.getLong(cur.getColumnIndex(ID));
             int column = cur.getColumnIndex(TUS_QUERY);
             TumblrQuery query;
             if(cur.isNull(column)){
@@ -343,6 +370,26 @@ public class DatabaseManager {
             res.name = getString(cur, column, Stream.defaultName(res));
             column = cur.getColumnIndex(TS_DOGEOCODE);
             res.doGeocode = getBoolean(cur, column, false);
+            return res;
+        }
+    };
+
+    /**
+     * Transforms Cursors into RedditStreams
+     */
+    private static final Converter<Cursor, RedditStream> CURSOR_REDDIT_STREAM_CONVERTER = new Converter<Cursor, RedditStream>() {
+        @Override
+        public RedditStream convert(Cursor cur) {
+            long thisID = cur.getLong(cur.getColumnIndex(ID));
+            int column = cur.getColumnIndex(NAME);
+            RedditStream res = new RedditStream(thisID);
+            res.name = getString(cur, column, Stream.defaultName(res));
+            column = cur.getColumnIndex(RED_SUBREDDIT);
+            res.subreddit = getString(cur, column, RedditStream.DEFAULT_SUBREDDIT);
+            column = cur.getColumnIndex(RED_SORTING);
+            res.sorting = Sorting.valueOf(getString(cur, column, RedditStream.DEFAULT_SORTING.toString()));
+            column = cur.getColumnIndex(RED_ALLOW_NSFW);
+            res.allowNSFW = getBoolean(cur, column, false);
             return res;
         }
     };
@@ -747,6 +794,87 @@ public class DatabaseManager {
         return tumblrQueryMap;
     }
 
+    private Map<Long, TwitterStream> twitterStreamMap = null;
+
+    /**
+     * Fetch a single Twitter Stream by its ID
+     * @param id The ID of the Twitter Stream to fetch
+     * @return The corresponding TwitterStream or null if it can't be found
+     */
+    public TwitterStream twitterStreamFromID(long id){
+        if(twitterStreamMap == null){
+            return fetchByID(id, TWITTER_STREAM, CURSOR_TWITTER_STREAM_CONVERTER);
+        }
+        return twitterStreamMap.get(id);
+    }
+
+    /**
+     * Maps all Twitter Streams by their IDs
+     * @return A mapping of longs to Twitter Streams
+     */
+    public Map<Long, TwitterStream> getAllTwitterStreams(){
+        if(twitterStreamMap == null){
+            //Cache the queries
+            getAllTwitterQueries();
+            //Fetch and cache the streams
+            twitterStreamMap = getAll(TWITTER_STREAM, CURSOR_TWITTER_STREAM_CONVERTER);
+        }
+        return twitterStreamMap;
+    }
+
+    private Map<Long, TumblrStream> tumblrStreamMap = null;
+
+    /**
+     * Fetch a single Tumblr Stream by its ID
+     * @param id The ID of the Tumblr Stream to fetch
+     * @return The corresponding TumblrStream or null if it can't be found
+     */
+    public TumblrStream tumblrStreamFromID(long id){
+        if(tumblrStreamMap == null){
+            return fetchByID(id, TUMBLR_STREAM, CURSOR_TUMBLR_STREAM_CONVERTER);
+        }
+        return tumblrStreamMap.get(id);
+    }
+
+    /**
+     * Maps all Tumblr Streams by their IDs
+     * @return A mapping of longs to Tumblr Streams
+     */
+    public Map<Long, TumblrStream> getAllTumblrStreams(){
+        if(tumblrStreamMap == null){
+            //Cache the queries
+            getAllTumblrQueries();
+            //Fetch and cache the streams
+            tumblrStreamMap = getAll(TUMBLR_STREAM, CURSOR_TUMBLR_STREAM_CONVERTER);
+        }
+        return tumblrStreamMap;
+    }
+
+    private Map<Long, RedditStream> redditStreamMap = null;
+
+    /**
+     * Maps all Reddit Streams by their IDs
+     * @return A mapping of longs to Reddit Streams
+     */
+    public Map<Long, RedditStream> getAllRedditStreams(){
+        if(redditStreamMap == null){
+            redditStreamMap = getAll(REDDIT_STREAM, CURSOR_REDDIT_STREAM_CONVERTER);
+        }
+        return redditStreamMap;
+    }
+
+    /**
+     * Fetch a single Reddit Stream by its ID
+     * @param id The ID of the Reddit Stream to fetch
+     * @return The corresponding RedditStream or null if it can't be found
+     */
+    public RedditStream redditStreamFromID(long id){
+        if(redditStreamMap != null){
+            return redditStreamMap.get(id);
+        }
+        return fetchByID(id, REDDIT_STREAM, CURSOR_REDDIT_STREAM_CONVERTER);
+    }
+
     /**
      * Save the query in the database and return it's id
      * @param query the query to save
@@ -779,62 +907,6 @@ public class DatabaseManager {
         return res;
     }
 
-    private Map<Long, TwitterStream> twitterStreamMap = null;
-
-    /**
-     * Fetch a single Twitter Stream by its ID
-     * @param id The ID of the Twitter Stream to fetch
-     * @return The corresponding TwitterStream or null if it can't be found
-     */
-    public TwitterStream twitterStreamFromID(long id){
-        if(twitterStreamMap == null){
-            return fetchByID(id, TWITTER_STREAM, CURSOR_TWITTER_STREAM_CONVERTER);
-        }
-        return twitterStreamMap.get(id);
-    }
-
-    private Map<Long, TumblrStream> tumblrStreamMap = null;
-
-    /**
-     * Fetch a single Tumblr Stream by its ID
-     * @param id The ID of the Tumblr Stream to fetch
-     * @return The corresponding TumblrStream or null if it can't be found
-     */
-    public TumblrStream tumblrStreamFromID(long id){
-        if(tumblrStreamMap == null){
-            return fetchByID(id, TUMBLR_STREAM, CURSOR_TUMBLR_STREAM_CONVERTER);
-        }
-        return tumblrStreamMap.get(id);
-    }
-
-    /**
-     * Maps all Twitter Streams by their IDs
-     * @return A mapping of longs to Twitter Streams
-     */
-    public Map<Long, TwitterStream> getAllTwitterStreams(){
-        if(twitterStreamMap == null){
-            //Cache the queries
-            getAllTwitterQueries();
-            //Fetch and cache the streams
-            twitterStreamMap = getAll(TWITTER_STREAM, CURSOR_TWITTER_STREAM_CONVERTER);
-        }
-        return twitterStreamMap;
-    }
-
-    /**
-     * Maps all Tumblr Streams by their IDs
-     * @return A mapping of longs to Tumblr Streams
-     */
-    public Map<Long, TumblrStream> getAllTumblrStreams(){
-        if(tumblrStreamMap == null){
-            //Cache the queries
-            getAllTumblrQueries();
-            //Fetch and cache the streams
-            tumblrStreamMap = getAll(TUMBLR_STREAM, CURSOR_TUMBLR_STREAM_CONVERTER);
-        }
-        return tumblrStreamMap;
-    }
-
     /**
      * Saves the stream and its query
      * @param stream The stream to save
@@ -850,6 +922,7 @@ public class DatabaseManager {
      * @return The ID of the entry or -1 if there was an error
      */
     public long save(TwitterStream stream){
+        save(stream.query);//Save the query too!!
         return save(stream, true);
     }
 
@@ -898,6 +971,22 @@ public class DatabaseManager {
     }
 
     /**
+     * Saves the stream in the database and returns its ID
+     * @param stream The reddit stream to save
+     * @return The stream's ID
+     */
+    public long save(RedditStream stream){
+        if(stream == null){
+            return save(REDDIT_STREAM, RED_ALLOW_NSFW, null, basicConverter(stream));
+        }
+        long res = save((Savable) stream);
+        if(redditStreamMap != null){
+            redditStreamMap.put(res, stream);
+        }
+        return res;
+    }
+
+    /**
      * Helper class to open the SQLite DB and handle table creation and version upgrades
      *
      * @author Tobias Highfill
@@ -918,6 +1007,7 @@ public class DatabaseManager {
             db.execSQL(CREATE_TWITTER_QUERY);
             db.execSQL(CREATE_TWITTER_STREAM);
             createTumblrTables(db);
+            db.execSQL(CREATE_REDDIT_STREAM);
         }
 
         @Override
@@ -935,6 +1025,10 @@ public class DatabaseManager {
             if(oldVersion <= 2 && newVersion >= 3){
                 //Add Tumblr stream, Tumblr query
                 createTumblrTables(db);
+            }
+            if(oldVersion <= 3 && newVersion >= 4){
+                //Add reddit stream
+                db.execSQL(CREATE_REDDIT_STREAM);
             }
         }
     }

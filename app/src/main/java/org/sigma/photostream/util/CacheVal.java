@@ -11,6 +11,7 @@ public class CacheVal<E> {
     public static final long DEFAULT_LIFETIME = 1000*60; //One minute
 
     private Timer timer = new Timer();
+
     private long lifetime = DEFAULT_LIFETIME;
     private TimerTask task = new TimerTask() {
         @Override
@@ -20,6 +21,7 @@ public class CacheVal<E> {
     };
 
     private E cachedVal = null;
+
     private boolean loaded = false;
 
     private Giver<E> giver;
@@ -38,6 +40,22 @@ public class CacheVal<E> {
         if(loadNow){
             load();
         }
+    }
+
+    public long getLifetime() {
+        return lifetime;
+    }
+
+    public void setLifetime(long lifetime) {
+        if(lifetime > 0) {
+            this.lifetime = lifetime;
+        }else{
+            throw new IllegalArgumentException("Lifetime must be positive and non-zero!");
+        }
+    }
+
+    public boolean isLoaded() {
+        return loaded;
     }
 
     public void unLoad(){
@@ -64,5 +82,9 @@ public class CacheVal<E> {
             load();
         }
         return cachedVal;
+    }
+
+    public E getIfLoaded(E defaultVal){
+        return loaded ? cachedVal : defaultVal;
     }
 }
