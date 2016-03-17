@@ -68,7 +68,7 @@ public class TwitterStream extends TembooStream {
     private int remaining = 100;
     private long resetAt = 0;
 
-    private Set<Double> ids = new TreeSet<>();
+    private Set<String> ids = new TreeSet<>();
 
     private View editView = null;
 
@@ -488,41 +488,35 @@ public class TwitterStream extends TembooStream {
             return null;
         }
 
-        private void processTweet(JSONObject tweet, String urlstr) throws JSONException, MalformedURLException {
-            double id = tweet.getDouble("id");
-            int retweets = tweet.getInt("retweet_count");
-            String retweetedStatus = "retweeted_status";
-            if(tweet.has(retweetedStatus)){
-                //This is a retweet, recursively call to get to root
-                processTweet(tweet.getJSONObject(retweetedStatus), urlstr);
-            }else if(ids.add(id)){ //Returns true if set is modified
-                //This will approach 1 for large values
-                double weight = 1.0 - Math.pow(1.0 - 1 / 50.0, retweets+1);
-                //Tweet has a photo, download it asynchronously
-                String user = tweet.getJSONObject("user").getString("name");
-                String name = "Tweet from " + user;
-                //Use tweet body as description
-                String description = tweet.getString("text");
-                URL url = new URL(urlstr);
-                Flotsam.ImageUpdateListener listener = new Flotsam.ImageUpdateListener() {
-                    @Override
-                    public void onImageUpdate(Flotsam flotsam) {
-                        parent.endDLThread();
-                        flotsam.removeImageUpdateListener(this);
-                    }
-                };
-                Flotsam res = new Flotsam(url, name, description, listener, false);
-                res.setWeight(weight);
-                parent.receiveFlotsam(res);
-                parent.newDLThread();
+        @Override
+        protected void onPostExecute(JSONObject root) {
+            try {
+                new TweetProcessor(parent).execute(root.getJSONArray("statuses"));
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
+        }
+    }
+
+    private class TweetProcessor extends AsyncTask<JSONArray, Flotsam, Void>{
+
+        TwitterStream parent;
+
+        TweetProcessor(TwitterStream parent){
+            this.parent = parent;
         }
 
         @Override
-        protected void onPostExecute(JSONObject root) {
+        protected void onProgressUpdate(Flotsam... values) {
+            parent.receiveFlotsam(values[0]);
+            parent.newDLThread();
+        }
+
+        @Override
+        protected Void doInBackground(JSONArray... params) {
+            JSONArray tweets = params[0];
             parent.setStatus(NORMAL);
             try {
-                JSONArray tweets = root.getJSONArray("statuses");
                 //This is a big array of tweets
                 System.out.println("Processing "+tweets.length()+" tweets...");
                 for(int i=0; i < tweets.length(); i++){
@@ -544,6 +538,40 @@ public class TwitterStream extends TembooStream {
                 }
             } catch (JSONException | MalformedURLException e) {
                 e.printStackTrace();
+            }
+            return null;
+        }
+
+        private void processTweet(JSONObject tweet, String urlstr) throws JSONException, MalformedURLException {
+            String id = tweet.getString("id_str");
+            int retweets = tweet.getInt("retweet_count");
+            String retweetedStatus = "retweeted_status";
+            if(ids.contains(id)){
+                return;
+            }
+            if(tweet.has(retweetedStatus)){
+                //This is a retweet, recursively call to get to root
+                processTweet(tweet.getJSONObject(retweetedStatus), urlstr);
+            }else{
+                ids.add(id);
+                //This will approach 1 for large values
+                double weight = 1.0 - Math.pow(1.0 - 1 / 50.0, retweets+1);
+                //Tweet has a photo, download it asynchronously
+                String user = tweet.getJSONObject("user").getString("name");
+                String name = "Tweet from " + user;
+                //Use tweet body as description
+                String description = tweet.getString("text");
+                URL url = new URL(urlstr);
+                Flotsam.ImageUpdateListener listener = new Flotsam.ImageUpdateListener() {
+                    @Override
+                    public void onImageUpdate(Flotsam flotsam) {
+                        parent.endDLThread();
+                        flotsam.removeImageUpdateListener(this);
+                    }
+                };
+                Flotsam res = new Flotsam(url, name, description, listener, false);
+                res.setWeight(weight);
+                publishProgress(res);
             }
         }
     }

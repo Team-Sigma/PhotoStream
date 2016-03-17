@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import org.sigma.photostream.MainActivity;
 import org.sigma.photostream.R;
+import org.sigma.photostream.ui.ImprovedGridView;
 
 import java.util.Collection;
 
@@ -26,9 +27,9 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
         super(context, resource);
     }
 
-    public void bindToView(AbsListView view){
+    public void bindToView(ImprovedGridView view){
         view.setAdapter(this);
-        view.setOnScrollListener(new AbsListView.OnScrollListener() {
+        view.addOnScrollListener(new AbsListView.OnScrollListener() {
 
             boolean idle = true;
 
@@ -41,6 +42,8 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
                 if(!idle)
                     return;
+                System.out.println(String.format("FirstVisible: %d, visCount: %d, total: %d",
+                        firstVisibleItem, visibleItemCount, totalItemCount));
                 boolean visible = false;
                 for (int i = 0; i < totalItemCount; i++) {
                     if (i == firstVisibleItem) {
@@ -51,8 +54,7 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
                     Flotsam f = getItem(i);
                     if (visible && !f.isLoaded()) {
                         f.load();
-                    }
-                    else if(f.isLoaded()) {
+                    }else if(!visible && f.isLoaded()) {
                         f.unLoad();
                     }
                 }
@@ -61,7 +63,7 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
         final Flotsam f = this.getItem(position);
         if(convertView == null){
             LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService
@@ -101,7 +103,7 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
                         }
                         main.popupWindow = f.popup(getContext());
                         main.popupWindow.showAtLocation(main.gridView, Gravity.CENTER, 0, 0);
-                        System.out.println("Flotsam weight: "+ f.getWeight());
+                        System.out.println("Flotsam weight: "+ f.getWeight()+ " position: "+position);
                     }
                 }
             });
@@ -116,40 +118,40 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
         }
     }
 
-    @Override
-    public void add(Flotsam object) {
-        double weight = object.getWeight();
-        final int length = getCount();
-        int start = 0, end = length;
-        while(start < end && start < length){
-            int i = (end - start) / 2;
-            double here = this.getItem(i).getWeight();
-            if(here == weight){
-                this.insert(object, i+1);
-            }else if(weight < here){
-                end = i;
-            }else{
-                start = i+1;
-            }
-        }
-        if(start >= length){
-            super.add(object);
-        }else{
-            insert(object, start);
-        }
-    }
-
-    @Override
-    public void addAll(Collection<? extends Flotsam> collection) {
-        for(Flotsam f : collection){
-            add(f);
-        }
-    }
-
-    @Override
-    public void addAll(Flotsam... items) {
-        for(Flotsam f : items){
-            add(f);
-        }
-    }
+//    @Override
+//    public void add(Flotsam object) {
+//        double weight = object.getWeight();
+//        final int length = getCount();
+//        int start = 0, end = length;
+//        while(start < end && start < length){
+//            int i = (end - start) / 2;
+//            double here = this.getItem(i).getWeight();
+//            if(here == weight){
+//                this.insert(object, i+1);
+//            }else if(weight < here){
+//                end = i;
+//            }else{
+//                start = i+1;
+//            }
+//        }
+//        if(start >= length){
+//            super.add(object);
+//        }else{
+//            insert(object, start);
+//        }
+//    }
+//
+//    @Override
+//    public void addAll(Collection<? extends Flotsam> collection) {
+//        for(Flotsam f : collection){
+//            add(f);
+//        }
+//    }
+//
+//    @Override
+//    public void addAll(Flotsam... items) {
+//        for(Flotsam f : items){
+//            add(f);
+//        }
+//    }
 }

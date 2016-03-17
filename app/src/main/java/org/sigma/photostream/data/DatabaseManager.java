@@ -478,6 +478,9 @@ public class DatabaseManager {
                 }
             }
         }
+        String last = buffer.toString();
+        if(!last.isEmpty())
+            res.add(last);
         return res;
     }
 
@@ -922,7 +925,6 @@ public class DatabaseManager {
      * @return The ID of the entry or -1 if there was an error
      */
     public long save(TwitterStream stream){
-        save(stream.query);//Save the query too!!
         return save(stream, true);
     }
 

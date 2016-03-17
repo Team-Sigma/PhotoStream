@@ -29,9 +29,12 @@ import org.sigma.photostream.stream.TumblrQuery;
 import org.sigma.photostream.stream.TumblrStream;
 import org.sigma.photostream.stream.TwitterQuery;
 import org.sigma.photostream.stream.TwitterStream;
+import org.sigma.photostream.ui.ImprovedGridView;
 import org.sigma.photostream.util.Receiver;
+import org.sigma.photostream.util.Util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,7 +53,7 @@ public class MainActivity extends AppCompatActivity
     public DatabaseManager databaseManager = null;
     public PopupWindow popupWindow = null;
 
-    public GridView gridView = null;
+    public ImprovedGridView gridView = null;
     public Toolbar toolbar = null;
     public FloatingActionButton fab = null;
     public DrawerLayout drawer = null;
@@ -92,7 +95,7 @@ public class MainActivity extends AppCompatActivity
         }
         availableStreams = new StreamList(this);
 
-        gridView = (GridView) findViewById(R.id.gridView);
+        gridView = (ImprovedGridView) findViewById(R.id.gridView);
         final int SAFETY = 10, BATCH_SIZE = 30;
         final Receiver<List<Flotsam>> onComplete = new Receiver<List<Flotsam>>() {
             @Override
@@ -101,7 +104,7 @@ public class MainActivity extends AppCompatActivity
                 System.out.println("Finished refill");
             }
         };
-        gridView.setOnScrollListener(new AbsListView.OnScrollListener() {
+        gridView.addOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
 
@@ -109,10 +112,10 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if(visibleItemCount != 0
+                if (visibleItemCount != 0
                         && firstVisibleItem >= totalItemCount - visibleItemCount - SAFETY
-                        && !refilling){
-                    System.out.println("Running getManyAsync("+BATCH_SIZE+")...");
+                        && !refilling) {
+                    System.out.println("Running getManyAsync(" + BATCH_SIZE + ")...");
                     refilling = true;
                     currentStream.getManyAsync(BATCH_SIZE, onComplete);
                 }
@@ -144,7 +147,7 @@ public class MainActivity extends AppCompatActivity
         //DANGER!!
 
         fetchAvailableStreams();
-        Stream res = null;
+        Stream res;
         if(availableStreams.isEmpty()) {
             TwitterQuery query = new TwitterQuery();
 //            TumblrQuery query = new TumblrQuery();
@@ -199,9 +202,10 @@ public class MainActivity extends AppCompatActivity
         String csv = DatabaseManager.toCSV(orig);
         System.out.println("CSV = "+csv);
         List<String> parsed = DatabaseManager.parseCSV(csv);
-        assert orig.size() == parsed.size();
+        System.out.println("parsed = "+Arrays.toString(parsed.toArray()));
+        Util.debugAssert(orig.size() == parsed.size());
         for(int i=0; i<parsed.size();i++){
-            assert orig.get(i).equals(parsed.get(i));
+            Util.debugAssert(orig.get(i).equals(parsed.get(i)));
         }
     }
 
@@ -335,7 +339,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onDestroy() {
-        Flotsam.deleteTempFiles();
+//        Flotsam.deleteTempFiles();
         super.onDestroy();
     }
 

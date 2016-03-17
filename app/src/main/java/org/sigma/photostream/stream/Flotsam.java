@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,6 +43,8 @@ public class Flotsam {
     public static final boolean DEFAULT_LAZINESS = false;
 
     private static File DUMP_FOLDER = null;
+
+    private static final Map<URL, File> KNOWN_IMAGES = new HashMap<>();
 
     public static File getDumpFolder(){
         if(DUMP_FOLDER != null){
@@ -66,8 +69,6 @@ public class Flotsam {
         }
     }
 
-    private static final Map<URL, File> KNOWN_IMAGES = new HashMap<>();
-
     private File src = null;
     private CacheVal<Bitmap> img = new CacheVal<>(new Giver<Bitmap>() {
         @Override
@@ -76,7 +77,7 @@ public class Flotsam {
                 return null;
             return BitmapFactory.decodeFile(src.getAbsolutePath());
         }
-    });
+    }, true);
     public String name = "";
     public String description = "";
 
@@ -192,7 +193,8 @@ public class Flotsam {
     }
 
     private void notifyListeners() {
-        for(ImageUpdateListener listener : imageUpdateListeners){
+        List<ImageUpdateListener> copy = new ArrayList<>(imageUpdateListeners);
+        for(ImageUpdateListener listener : copy){
             listener.onImageUpdate(this);
         }
     }
@@ -309,7 +311,7 @@ public class Flotsam {
         @Override
         protected void onPostExecute(File src) {
             parent.src = src;
-            parent.img.load();
+            parent.load();
             parent.notifyListeners();
         }
     }
