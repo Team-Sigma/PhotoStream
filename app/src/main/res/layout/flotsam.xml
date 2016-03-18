@@ -19,5 +19,7 @@
         android:id="@+id/imgFlotsam"
         android:visibility="invisible"
         android:contentDescription="@string/imgFlotsam_desc"
-        android:src="@mipmap/testimg"/>
+        android:src="@mipmap/testimg"
+        android:padding="3dp"
+        android:scaleType="centerInside"/>
 </LinearLayout>

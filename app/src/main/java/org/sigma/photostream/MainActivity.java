@@ -188,6 +188,8 @@ public class MainActivity extends AppCompatActivity
         return locationEnabled;
     }
 
+    private boolean permissionDone = false;
+
     private void setupLocationService() {
         final long minTime = 1000 * 60 * 60;
         final float minDist = 500;
@@ -199,26 +201,37 @@ public class MainActivity extends AppCompatActivity
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             //Politely ask the user for permission
+            permissionDone = false;
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST);
             return;
         }
-        locationEnabled = true;
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, minTime, minDist, new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                lastLocation = location;
-            }
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {}
-            @Override
-            public void onProviderEnabled(String provider) {}
-            @Override
-            public void onProviderDisabled(String provider) {}
-        });
-    }
+        locationEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        if(locationEnabled) {
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, minTime, minDist, new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    lastLocation = location;
+                }
 
-    private boolean permissionDone = false;
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {
+                }
+
+                @Override
+                public void onProviderEnabled(String provider) {
+                }
+
+                @Override
+                public void onProviderDisabled(String provider) {
+                }
+            });
+        }else{
+            System.out.println("No network provider!");
+            Toast.makeText(getApplicationContext(),
+                    "No network location provider found", Toast.LENGTH_SHORT).show();
+        }
+    }
 
     public Location getLastLocation(boolean waitForPermission){
         if(locationManager == null){
@@ -395,13 +408,17 @@ public class MainActivity extends AppCompatActivity
 
     public void setCurrentStream(Stream stream) {
         if(stream != null) {
-            if(currentStream != null) {
-                currentStream.getFlotsamAdapter().removeAll();
-                currentStream.refresh();
+            if(stream == currentStream){
+                refresh();
+            }else {
+                if (currentStream != null) {
+                    currentStream.getFlotsamAdapter().removeAll();
+                    currentStream.refresh();
+                }
+                this.currentStream = stream;
+                stream.getFlotsamAdapter().bindToView(gridView);
+                startFetching();
             }
-            this.currentStream = stream;
-            stream.getFlotsamAdapter().bindToView(gridView);
-            startFetching();
         }else{
             throw new NullPointerException("CurrentStream should not be null!");
         }

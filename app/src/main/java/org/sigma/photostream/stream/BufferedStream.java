@@ -2,6 +2,7 @@ package org.sigma.photostream.stream;
 
 import android.content.Context;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,16 +36,17 @@ public abstract class BufferedStream extends Stream {
     @Override
     public Flotsam next() {
         Flotsam res = null;
-        if(!buffer.isEmpty()){
-            res = buffer.remove(0);
+        List<Flotsam> copy = new ArrayList<>(buffer);
+        if(!copy.isEmpty()){
+            res = copy.remove(0);
         }
-        if(buffer.size() <= LOW_BUFFER){
+        if(copy.size() <= LOW_BUFFER){
             if(this.getStatus() != Stream.DOWNLOADING_IMAGES) {
                 fetchMore();
             }
-            if(buffer.isEmpty()){
-                while (buffer.isEmpty()){}
-                res = buffer.remove(0);
+            if(copy.isEmpty()){
+                while (copy.isEmpty()){}
+                res = copy.remove(0);
             }
         }
         images.add(res);

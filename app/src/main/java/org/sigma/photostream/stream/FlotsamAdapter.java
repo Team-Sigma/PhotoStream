@@ -45,7 +45,7 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
                 System.out.println(String.format("FirstVisible: %d, visCount: %d, total: %d",
                         firstVisibleItem, visibleItemCount, totalItemCount));
                 boolean visible = false;
-                for (int i = 0; i < totalItemCount; i++) {
+                for (int i = 0; i < getCount(); i++) {
                     if (i == firstVisibleItem) {
                         visible = true;
                     } else if (i >= firstVisibleItem + visibleItemCount) {
@@ -77,18 +77,16 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
                 public void onImageUpdate(Flotsam flotsam) {
                     if(!flotsam.isLoaded()){
                         progress.setVisibility(View.VISIBLE);
-                        img.setVisibility(View.INVISIBLE);
+                        img.setVisibility(View.GONE);
                     }else {
                         img.setImageBitmap(flotsam.getImage());
                         img.setMinimumWidth(img.getWidth());
                         img.setMinimumHeight(img.getHeight());
-                        progress.setVisibility(View.INVISIBLE);
+                        progress.setVisibility(View.GONE);
                         img.setVisibility(View.VISIBLE);
                     }
                 }
             };
-            img.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-            img.setPadding(3, 3, 3, 3);
             f.addImageUpdateListener(updateListener);
             updateListener.onImageUpdate(f);
             img.setOnClickListener(new View.OnClickListener() {

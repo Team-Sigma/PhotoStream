@@ -41,7 +41,7 @@ public class RedditStream extends BufferedStream {
     private static final UserAgent USER_AGENT = UserAgent.of("android", "org.sigma.photostream", "v1.0.0", "team-sigma");
     private static final RedditClient REDDIT_CLIENT = new RedditClient(USER_AGENT);
     private static final Credentials CREDENTIALS = Credentials.installedApp("", "http://localhost:9281"); //TODO: Fill this in
-    private static final OAuthData OAUTH_DATA = initOAuthData();
+//    private static final OAuthData OAUTH_DATA = initOAuthData();
 
     private static OAuthData initOAuthData(){
         try {
