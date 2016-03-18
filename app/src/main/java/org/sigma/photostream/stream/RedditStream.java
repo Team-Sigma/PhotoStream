@@ -2,11 +2,15 @@ package org.sigma.photostream.stream;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.view.View;
 import android.view.ViewGroup;
 
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.http.UserAgent;
+import net.dean.jraw.http.oauth.Credentials;
+import net.dean.jraw.http.oauth.OAuthData;
+import net.dean.jraw.http.oauth.OAuthException;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.paginators.Sorting;
 import net.dean.jraw.paginators.SubredditPaginator;
@@ -36,6 +40,19 @@ public class RedditStream extends BufferedStream {
 
     private static final UserAgent USER_AGENT = UserAgent.of("android", "org.sigma.photostream", "v1.0.0", "team-sigma");
     private static final RedditClient REDDIT_CLIENT = new RedditClient(USER_AGENT);
+    private static final Credentials CREDENTIALS = Credentials.installedApp("", "http://localhost:9281"); //TODO: Fill this in
+    private static final OAuthData OAUTH_DATA = initOAuthData();
+
+    private static OAuthData initOAuthData(){
+        try {
+            OAuthData res = REDDIT_CLIENT.getOAuthHelper().easyAuth(CREDENTIALS);
+            REDDIT_CLIENT.authenticate(res);
+            return res;
+        } catch (OAuthException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     public String subreddit = DEFAULT_SUBREDDIT;
     public boolean allowNSFW = false;
@@ -59,46 +76,9 @@ public class RedditStream extends BufferedStream {
         DatabaseManager.getInstance().save(this);
     }
 
-    private void processSubmission(Submission submission){
-        if((submission.isNsfw() && !allowNSFW) || submission.isSelfPost())
-            return;
-        String urlstr = submission.getUrl();
-        for(String suffix : IMAGE_SUFFIXES){
-            if(urlstr.endsWith(suffix)){
-                try {
-                    Flotsam.ImageUpdateListener listener = new Flotsam.ImageUpdateListener() {
-                        @Override
-                        public void onImageUpdate(Flotsam flotsam) {
-                            endDLThread();
-                        }
-                    };
-                    Flotsam flotsam = new Flotsam(urlstr, submission.getTitle(),
-                            String.format("Posted by %s on %s", submission.getAuthor(), subreddit), listener);
-                    receiveFlotsam(flotsam);
-                    newDLThread();
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
     @Override
     protected void fetchMore() {
-        if(paginator == null){
-            Util.debugAssert(subreddit != null);
-            paginator = new SubredditPaginator(REDDIT_CLIENT, subreddit);
-            paginator.setSorting(sorting);
-        }
-        if(!paginator.hasStarted()){
-            for(Submission submission : paginator.accumulateMerged(maxPages)){
-                processSubmission(submission);
-            }
-        }else{
-            for(Submission submission : paginator.next(false)){
-                processSubmission(submission);
-            }
-        }
+        new RedditFetcher().execute();
     }
 
     @Override
@@ -130,5 +110,56 @@ public class RedditStream extends BufferedStream {
     @Override
     public String nullColumn() {
         return DatabaseManager.RED_ALLOW_NSFW;
+    }
+
+    private class RedditFetcher extends AsyncTask<Void, Flotsam, Void> {
+
+        @Override
+        protected void onProgressUpdate(Flotsam... values) {
+            receiveFlotsam(values[0]);
+            newDLThread();
+        }
+
+        private void processSubmission(Submission submission){
+            if((submission.isNsfw() && !allowNSFW) || submission.isSelfPost())
+                return;
+            String urlstr = submission.getUrl();
+            for(String suffix : IMAGE_SUFFIXES){
+                if(urlstr.endsWith(suffix)){
+                    try {
+                        Flotsam.ImageUpdateListener listener = new Flotsam.ImageUpdateListener() {
+                            @Override
+                            public void onImageUpdate(Flotsam flotsam) {
+                                endDLThread();
+                            }
+                        };
+                        Flotsam flotsam = new Flotsam(urlstr, submission.getTitle(),
+                                String.format("Posted by %s on %s", submission.getAuthor(), subreddit), listener);
+                        publishProgress(flotsam);
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            if(paginator == null){
+                Util.debugAssert(subreddit != null);
+                paginator = new SubredditPaginator(REDDIT_CLIENT, subreddit);
+                paginator.setSorting(sorting);
+            }
+            if(!paginator.hasStarted()){
+                for(Submission submission : paginator.accumulateMerged(maxPages)){
+                    processSubmission(submission);
+                }
+            }else{
+                for(Submission submission : paginator.next(false)){
+                    processSubmission(submission);
+                }
+            }
+            return null;
+        }
     }
 }

@@ -3,6 +3,7 @@ package org.sigma.photostream.stream;
 import android.app.DatePickerDialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
@@ -50,8 +51,6 @@ public class TwitterStream extends TembooStream {
     private static final String CONSUMER_KEY_SECRET = "EproeCZvr4zibBkuywPgnRmwFBMTi7LgPX4G3eax6wAFAfVpXN";
     private static final String ACCESS_TOKEN = "41432906-btJbtBnk8MsB8ch1xMfqcSL8o1jqJnNkOHK8GVBZQ";
     private static final String ACCESS_TOKEN_SECRET = "trx0y7zwMDvIZEbitTDkFnlXNgwx2GAn1zE3zEepnQsrf";
-
-    private static final int LOW_BUFFER = 10;
 
     private static long generateID(){
         DatabaseManager dbm = DatabaseManager.getInstance();
@@ -116,7 +115,6 @@ public class TwitterStream extends TembooStream {
 
     @Override
     public void refresh() {
-
         ids = new TreeSet<>();
 //        fetchMore();
     }
@@ -417,6 +415,7 @@ public class TwitterStream extends TembooStream {
         }
         this.geocodeRadius = geocodeRadius;
     }
+
     public ContentValues toContentValues() {
         ContentValues vals = new ContentValues();
         vals.put(DatabaseManager.ID, getID());
@@ -472,8 +471,11 @@ public class TwitterStream extends TembooStream {
             inputs.set_Query(params[0]);
             inputs.set_Count(parent.tweetBatchSize);
             if(parent.doGeocode){
-                //TODO add geolookup stuff here
-                inputs.set_Geocode(","+parent.geocodeRadius+"mi.");
+                Location loc = MainActivity.mainActivity.getLastLocation(true);
+                if(loc != null) {
+                    inputs.set_Geocode(String.format("%f,%f,%dmi.",
+                            loc.getLatitude(), loc.getLongitude(), parent.geocodeRadius));
+                }
             }
 
             parent.setStatus(FETCHING);

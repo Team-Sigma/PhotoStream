@@ -1,4 +1,4 @@
-# PhotoStream
+# PhotoStream ![PhotoStream Logo](photostream.png)
 
 An image aggregator app for Android
 

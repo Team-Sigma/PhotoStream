@@ -652,8 +652,9 @@ public class DatabaseManager {
                             System.out.println("NUKING THE DATABASE!!!");
                             SQLiteDatabase db = openHelper.getWritableDatabase();
                             for (String table : TABLES) {
-                                db.delete(table, null, null);
+                                db.execSQL("DROP TABLE "+table);
                             }
+                            openHelper.onCreate(db);
                         }
                     })
                     .setNegativeButton("No", new DialogInterface.OnClickListener() {

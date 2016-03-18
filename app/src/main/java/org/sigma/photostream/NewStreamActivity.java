@@ -93,8 +93,8 @@ public class NewStreamActivity extends AppCompatActivity {
         //TODO: Add more as they are created
         if(s != null){
             s.name = txtStreamName.getText().toString();
-            MainActivity parent = (MainActivity) this.getParent();
-            parent.startEditStreamActivity(s);
+            MainActivity.mainActivity.availableStreams.add(s);
+            MainActivity.mainActivity.startEditStreamActivity(s);
             this.finish();
         }
     }

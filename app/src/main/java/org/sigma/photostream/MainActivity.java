@@ -1,10 +1,17 @@
 package org.sigma.photostream;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -47,6 +54,7 @@ public class MainActivity extends AppCompatActivity
 
     public static final String PREFS_NAME = "PhotoStreamPrefs";
     public static final String PREF_DEFAULT_STREAM = "DefaultStream";
+    private static final int LOCATION_REQUEST = 42;
 
     public static MainActivity mainActivity = null;
 
@@ -67,9 +75,13 @@ public class MainActivity extends AppCompatActivity
 
     public StreamList availableStreams;
 
+    private LocationManager locationManager = null;
+    private boolean locationEnabled = false;
+    private Location lastLocation = null;
+
     private List<OnPauseListener> onPauseListeners = new LinkedList<>();
 
-    protected SharedPreferences getSharedPreferences(){
+    protected SharedPreferences getSharedPreferences() {
         return getSharedPreferences(PREFS_NAME, 0);
     }
 
@@ -87,9 +99,9 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
         streamMenu = navigationView.getMenu();
         String title = getString(R.string.drawer_streams);
-        for(int i=0; i<streamMenu.size(); i++){
+        for (int i = 0; i < streamMenu.size(); i++) {
             MenuItem item = streamMenu.getItem(i);
-            if(item.getTitle().equals(title)){
+            if (item.getTitle().equals(title)) {
                 streamMenu = item.getSubMenu();
             }
         }
@@ -142,13 +154,15 @@ public class MainActivity extends AppCompatActivity
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
+        setupLocationService();
+
         //DANGER!!! For testing purposes only!!
 //        databaseManager.nukeDB();
         //DANGER!!
 
         fetchAvailableStreams();
         Stream res;
-        if(availableStreams.isEmpty()) {
+        if (availableStreams.isEmpty()) {
             TwitterQuery query = new TwitterQuery();
 //            TumblrQuery query = new TumblrQuery();
             query.exactPhrases.add("food");
@@ -157,17 +171,84 @@ public class MainActivity extends AppCompatActivity
             databaseManager.save(test);
             availableStreams.add(test);
             res = test;
-        }else{
+        } else {
             String defStream = getSharedPreferences().getString(PREF_DEFAULT_STREAM, null);
-            if(defStream == null){
+            if (defStream == null) {
                 res = availableStreams.get(0);
-            }else{
+            } else {
                 res = getStreamByName(defStream);
             }
         }
         setCurrentStream(res);
 
         testCSV();
+    }
+
+    public boolean isLocationEnabled() {
+        return locationEnabled;
+    }
+
+    private void setupLocationService() {
+        final long minTime = 1000 * 60 * 60;
+        final float minDist = 500;
+        if (locationManager == null) {
+            locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            //Politely ask the user for permission
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST);
+            return;
+        }
+        locationEnabled = true;
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, minTime, minDist, new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                lastLocation = location;
+            }
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
+            @Override
+            public void onProviderEnabled(String provider) {}
+            @Override
+            public void onProviderDisabled(String provider) {}
+        });
+    }
+
+    private boolean permissionDone = false;
+
+    public Location getLastLocation(boolean waitForPermission){
+        if(locationManager == null){
+            setupLocationService();
+        }
+        if(!locationEnabled){
+            if(waitForPermission){
+                while(!permissionDone){}
+            }else{
+                return null;
+            }
+        }
+        return lastLocation;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode == LOCATION_REQUEST){
+            int i=0;
+            for(String perm : permissions){
+                if(perm.equals(Manifest.permission.ACCESS_COARSE_LOCATION)){
+                    locationEnabled = (grantResults[i] == PackageManager.PERMISSION_GRANTED);
+                    if(locationEnabled){
+                        setupLocationService();
+                    }
+                    permissionDone = true;
+                }
+                i++;
+            }
+        }
     }
 
     public boolean checkName(EditText txtStreamName, Stream stream){
@@ -216,6 +297,7 @@ public class MainActivity extends AppCompatActivity
     private void fetchAvailableStreams(){
         addAll(databaseManager.getAllTwitterStreams());
         addAll(databaseManager.getAllTumblrStreams());
+        addAll(databaseManager.getAllRedditStreams());
         //TODO add more streams here
     }
 
