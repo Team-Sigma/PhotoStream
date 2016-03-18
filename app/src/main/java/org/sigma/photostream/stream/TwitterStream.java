@@ -517,7 +517,7 @@ public class TwitterStream extends TembooStream {
             JSONArray tweets = params[0];
             parent.setStatus(NORMAL);
             try {
-                //This is a big array of tweets
+                //This is a big ar ray of tweets
                 System.out.println("Processing "+tweets.length()+" tweets...");
                 for(int i=0; i < tweets.length(); i++){
                     JSONObject tweet = tweets.getJSONObject(i);
