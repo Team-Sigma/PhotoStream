@@ -1,11 +1,19 @@
 package org.sigma.photostream.util;
 
+import org.sigma.photostream.BuildConfig;
+
 /**
  * Static utility class for useful functions
  * @author Tobias Highfill
  */
 public class Util {
     private Util(){}
+
+    public static void debugAssert(boolean test){
+        if(BuildConfig.DEBUG && !test){
+            throw new AssertionError();
+        }
+    }
 
     /**
      * Concatenate a list of {@link String}s with another string in between.
@@ -31,5 +39,9 @@ public class Util {
             dest.append(strings[i]);
         }
         return dest.toString();
+    }
+
+    public static <E> E[] array(E... objects){
+        return objects;
     }
 }

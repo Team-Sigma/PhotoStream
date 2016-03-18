@@ -1,14 +1,21 @@
 package org.sigma.photostream.stream;
 
+import android.app.DatePickerDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.temboo.Library.Twitter.Search.Tweets;
@@ -17,14 +24,23 @@ import com.temboo.core.TembooException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.sigma.photostream.EditStreamActivity;
 import org.sigma.photostream.MainActivity;
 import org.sigma.photostream.R;
 import org.sigma.photostream.data.DatabaseManager;
+import org.sigma.photostream.ui.ListEditorDialogFragment;
+import org.sigma.photostream.util.Receiver;
+import org.sigma.photostream.util.Transceiver;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Tobias Highfill
@@ -52,8 +68,9 @@ public class TwitterStream extends TembooStream {
     private int remaining = 100;
     private long resetAt = 0;
 
-    private List<Flotsam> images = new LinkedList<>();
-    private volatile List<Flotsam> buffer = new LinkedList<>();
+    private Set<String> ids = new TreeSet<>();
+
+    private View editView = null;
 
     public TwitterStream(long id, Context context, TwitterQuery query){
         super(id, context);
@@ -92,15 +109,16 @@ public class TwitterStream extends TembooStream {
         this(new TwitterQuery());
     }
 
-    private void fetchMore(){
+    @Override
+    protected void fetchMore(){
         new TwitterFetcher(this).execute(query.buildQuery());
     }
 
     @Override
     public void refresh() {
-        images = new LinkedList<>();
-        buffer = new LinkedList<>();
-        fetchMore();
+
+        ids = new TreeSet<>();
+//        fetchMore();
     }
 
     @Override
@@ -108,77 +126,285 @@ public class TwitterStream extends TembooStream {
         return true;
     }
 
-    @Override
-    public int count() {
-        return images.size();
-    }
-
-    @Override
-    public Flotsam next() {
-        Flotsam res = null;
-        if(!buffer.isEmpty()){
-            res = buffer.remove(0);
-        }
-        if(buffer.size() <= LOW_BUFFER){
-            if(this.getStatus() != Stream.DOWNLOADING_IMAGES) {
-                fetchMore();
-            }
-            if(buffer.isEmpty()){
-                while (buffer.isEmpty()){}
-                res = buffer.remove(0);
-            }
-        }
-        images.add(res);
-        return res;
-    }
-
-    @Override
-    public List<Flotsam> toList() {
-        return new LinkedList<>(images); //Copies the list so no-one can mess with it
-    }
-
     private void saveToast(Context context){
         Toast.makeText(context, "Saved!", Toast.LENGTH_SHORT).show();
     }
 
+    private void updatePreview(TextView lblPreview){
+        lblPreview.setText(String.format("Preview: \"%s\"", query.buildQuery()));
+    }
+
+    private void setUpDatePicker(final View root, int chkID, int lblID, int btnID, Date initial, final Receiver<Date> receiver){
+        final CheckBox chkEnable = (CheckBox) root.findViewById(chkID);
+        final TextView lblPre = (TextView) root.findViewById(lblID);
+        final Button btnChange = (Button) root.findViewById(btnID);
+        chkEnable.setChecked(initial != null);
+        View.OnClickListener enableListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(chkEnable.isChecked()){
+                    Date newDate = new Date();
+                    receiver.receive(newDate);
+                    lblPre.setText(newDate.toString());
+                    lblPre.setVisibility(View.VISIBLE);
+                    btnChange.setVisibility(View.VISIBLE);
+                }else{
+                    receiver.receive(null);
+                    lblPre.setVisibility(View.GONE);
+                    btnChange.setVisibility(View.GONE);
+                }
+            }
+        };
+        chkEnable.setOnClickListener(enableListener);
+        enableListener.onClick(null);
+        final DatePickerDialog.OnDateSetListener onDateSetListener = new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                Date newDate = new GregorianCalendar(year, monthOfYear, dayOfMonth).getTime();
+                receiver.receive(newDate);
+                lblPre.setText(newDate.toString());
+            }
+        };
+        btnChange.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                GregorianCalendar cal = new GregorianCalendar();
+                DatePickerDialog dialog = new DatePickerDialog(root.getContext(), onDateSetListener,
+                        cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
+                dialog.show();
+            }
+        });
+    }
+
+    private void setUpListEditor(final EditStreamActivity activity, final String tag, final View root, int btnID, final Transceiver<List<String>> trans){
+        Button btnEdit = (Button) root.findViewById(btnID);
+        btnEdit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                activity.fragment = new ListEditorDialogFragment();
+                activity.fragment.setReceiver(trans);
+                activity.fragment.setItems(trans.give());
+                activity.fragment.show(activity.getSupportFragmentManager(), tag);
+            }
+        });
+    }
+
     @Override
-    public View getEditView(final Context context, ViewGroup parent) {
-        final DatabaseManager db = DatabaseManager.getInstance();
+    public View getEditView(EditStreamActivity activity, ViewGroup parent) {
+        if(editView != null){ //This ensures that we only do this set-up once per stream
+            return editView;
+        }
+        final Context context = activity.getApplicationContext();
         final TwitterStream me = this;
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        ViewGroup root = (ViewGroup) inflater.inflate(R.layout.edit_twitter, parent, true);
+        editView = inflater.inflate(R.layout.edit_twitter, parent, true);
 
-        final EditText batchSize = (EditText) root.findViewById(R.id.numTweetBatchSize);
-        batchSize.setText(String.format("%d",tweetBatchSize));
-        batchSize.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+        final EditText txtName = (EditText) editView.findViewById(R.id.txtStreamName);
+        txtName.setText(this.name);
+        txtName.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
-                if (!hasFocus) {
-                    tweetBatchSize = Integer.parseInt(batchSize.getText().toString());
-                    db.save(me);
+                if(!hasFocus && MainActivity.mainActivity.checkName(txtName, me)) {
+                    me.name = txtName.getText().toString();
+                    saveSelf();
                     saveToast(context);
                 }
             }
         });
 
-        final CheckBox chkDoGeocode = (CheckBox) root.findViewById(R.id.chkDoGeocode);
+        final EditText numBatchSize = (EditText) editView.findViewById(R.id.numTweetBatchSize);
+        numBatchSize.setText(String.format("%d", tweetBatchSize));
+        numBatchSize.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    String input = numBatchSize.getText().toString();
+                    int newval = input.isEmpty() ? tweetBatchSize : Integer.parseInt(input);
+                    if(newval > 0 && newval <=100) {
+                        tweetBatchSize = newval;
+                        saveSelf();
+                        saveToast(context);
+                    }else{
+                        Toast.makeText(context,
+                                "Illegal batch size! Must be greater than 0 and less than 101",
+                                Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+        });
+
+        final CheckBox chkDoGeocode = (CheckBox) editView.findViewById(R.id.chkDoGeocode);
+        final EditText numRadius = (EditText) editView.findViewById(R.id.numRadius);
         chkDoGeocode.setChecked(doGeocode);
         chkDoGeocode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 doGeocode = chkDoGeocode.isChecked();
-                db.save(me);
+                numRadius.setEnabled(doGeocode);
+                saveSelf();
                 saveToast(context);
             }
         });
-        //TODO add in functionality
-        return root;
-    }
+        numRadius.setEnabled(doGeocode);
+        numRadius.setText(String.format("%d", geocodeRadius));
+        numRadius.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    String input = numRadius.getText().toString();
+                    geocodeRadius = input.isEmpty() ? 0 : Integer.parseInt(input);
+                    saveSelf();
+                    saveToast(context);
+                }
+            }
+        });
 
-    @Override
-    protected void onReceiveFlotsam(Flotsam img) {
-        buffer.add(img);
-        this.sendUpdateToListeners(img);
+        final TextView lblPreview = (TextView) editView.findViewById(R.id.lblPreview);
+        updatePreview(lblPreview);
+
+        final EditText txtFromUser = (EditText) editView.findViewById(R.id.txtFromUser);
+        txtFromUser.setText(query.fromUser);
+        txtFromUser.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    me.query.fromUser = txtFromUser.getText().toString();
+                    me.query.saveSelf();
+                    saveToast(context);
+                    updatePreview(lblPreview);
+                }
+            }
+        });
+
+        final EditText txtFromList = (EditText) editView.findViewById(R.id.txtFromList);
+        txtFromList.setText(query.fromList);
+        txtFromList.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    me.query.fromList = txtFromList.getText().toString();
+                    me.query.saveSelf();
+                    saveToast(context);
+                    updatePreview(lblPreview);
+                }
+            }
+        });
+
+        final CheckBox chkQuestion = (CheckBox) editView.findViewById(R.id.chkQuestion);
+        chkQuestion.setChecked(query.question);
+        chkQuestion.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                me.query.question = chkQuestion.isChecked();
+                me.query.saveSelf();
+                saveToast(context);
+                updatePreview(lblPreview);
+            }
+        });
+
+        setUpDatePicker(editView,
+                R.id.chkEnableSinceDate,
+                R.id.lblSinceDatePre,
+                R.id.btnSinceDateChange,
+                me.query.sinceDate,
+                new Receiver<Date>() {
+                    @Override
+                    public void receive(Date newval) {
+                        me.query.sinceDate = newval;
+                        me.query.saveSelf();
+                        saveToast(context);
+                        updatePreview(lblPreview);
+                    }
+                });
+
+        setUpDatePicker(editView,
+                R.id.chkEnableUntilDate,
+                R.id.lblUntilDatePre,
+                R.id.btnUntilDateChange,
+                me.query.untilDate,
+                new Receiver<Date>() {
+                    @Override
+                    public void receive(Date newval) {
+                        me.query.untilDate = newval;
+                        me.query.saveSelf();
+                        saveToast(context);
+                        updatePreview(lblPreview);
+                    }
+                });
+
+        Spinner spnAttitude = (Spinner) editView.findViewById(R.id.spnAttitude);
+        final ArrayAdapter<Attitude> attAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item);
+        for(Attitude att : new Attitude[]{Attitude.NONE, Attitude.POSITIVE, Attitude.NEGATIVE}){
+            if(att == me.query.attitude){
+                attAdapter.insert(att, 0);//Put in front
+            }else{
+                attAdapter.add(att);
+            }
+        }
+        spnAttitude.setAdapter(attAdapter);
+        spnAttitude.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                me.query.attitude = attAdapter.getItem(position);
+                me.query.saveSelf();
+                saveToast(context);
+                updatePreview(lblPreview);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                me.query.attitude = null;
+                me.query.saveSelf();
+                saveToast(context);
+                updatePreview(lblPreview);
+            }
+        });
+
+        setUpListEditor(activity, "exactPhrases", editView, R.id.btnEditExactPhrases, new Transceiver<List<String>>() {
+            @Override
+            public List<String> give() {
+                return me.query.exactPhrases;
+            }
+
+            @Override
+            public void receive(List<String> list) {
+                me.query.exactPhrases = list;
+                me.query.saveSelf();
+                saveToast(context);
+                updatePreview(lblPreview);
+            }
+        });
+
+        setUpListEditor(activity, "remove", editView, R.id.btnEditRemove, new Transceiver<List<String>>() {
+            @Override
+            public List<String> give() {
+                return me.query.remove;
+            }
+
+            @Override
+            public void receive(List<String> list) {
+                me.query.exactPhrases = list;
+                me.query.saveSelf();
+                saveToast(context);
+                updatePreview(lblPreview);
+            }
+        });
+
+        setUpListEditor(activity, "hashtags",editView, R.id.btnEditHashtags, new Transceiver<List<String>>() {
+            @Override
+            public List<String> give() {
+                return me.query.hashtags;
+            }
+
+            @Override
+            public void receive(List<String> list) {
+                me.query.exactPhrases = list;
+                me.query.saveSelf();
+                saveToast(context);
+                updatePreview(lblPreview);
+            }
+        });
+        return editView;
     }
 
     public int getGeocodeRadius() {
@@ -213,7 +439,7 @@ public class TwitterStream extends TembooStream {
     }
 
     public enum Attitude{
-        POSITIVE(":)"), NEGATIVE(":(");
+        POSITIVE(":)"), NEGATIVE(":("), NONE("");
         public final String face;
         Attitude(String face){
             this.face = face;
@@ -264,14 +490,37 @@ public class TwitterStream extends TembooStream {
 
         @Override
         protected void onPostExecute(JSONObject root) {
+            try {
+                new TweetProcessor(parent).execute(root.getJSONArray("statuses"));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private class TweetProcessor extends AsyncTask<JSONArray, Flotsam, Void>{
+
+        TwitterStream parent;
+
+        TweetProcessor(TwitterStream parent){
+            this.parent = parent;
+        }
+
+        @Override
+        protected void onProgressUpdate(Flotsam... values) {
+            parent.receiveFlotsam(values[0]);
+            parent.newDLThread();
+        }
+
+        @Override
+        protected Void doInBackground(JSONArray... params) {
+            JSONArray tweets = params[0];
             parent.setStatus(NORMAL);
             try {
-                JSONArray tweets = root.getJSONArray("statuses");
                 //This is a big array of tweets
                 System.out.println("Processing "+tweets.length()+" tweets...");
                 for(int i=0; i < tweets.length(); i++){
                     JSONObject tweet = tweets.getJSONObject(i);
-                    String user = tweet.getJSONObject("user").getString("name");
                     //Need to check if tweet contains a photo
                     //The filter should have taken care of it but better safe than sorry
                     try {
@@ -279,19 +528,7 @@ public class TwitterStream extends TembooStream {
                         for(int j = 0; j < media.length(); j++){
                             JSONObject curr = media.getJSONObject(j);
                             if(curr.getString("type").equals("photo")){
-                                //Tweet has a photo, download it asynchronously
-                                //Use tweet body as description
-                                String name = "Tweet from " + user;
-                                String description = tweet.getString("text");
-                                URL url = new URL(curr.getString("media_url_https"));
-                                Flotsam.ImageUpdateListener listener = new Flotsam.ImageUpdateListener() {
-                                    @Override
-                                    public void onImageUpdate(Flotsam flotsam) {
-                                        parent.endDLThread();
-                                    }
-                                };
-                                parent.receiveFlotsam(new Flotsam(url, name, description, listener, true));
-                                parent.newDLThread();
+                                processTweet(tweet, curr.getString("media_url_https"));
                                 break;
                             }
                         }
@@ -301,6 +538,40 @@ public class TwitterStream extends TembooStream {
                 }
             } catch (JSONException | MalformedURLException e) {
                 e.printStackTrace();
+            }
+            return null;
+        }
+
+        private void processTweet(JSONObject tweet, String urlstr) throws JSONException, MalformedURLException {
+            String id = tweet.getString("id_str");
+            int retweets = tweet.getInt("retweet_count");
+            String retweetedStatus = "retweeted_status";
+            if(ids.contains(id)){
+                return;
+            }
+            if(tweet.has(retweetedStatus)){
+                //This is a retweet, recursively call to get to root
+                processTweet(tweet.getJSONObject(retweetedStatus), urlstr);
+            }else{
+                ids.add(id);
+                //This will approach 1 for large values
+                double weight = 1.0 - Math.pow(1.0 - 1 / 50.0, retweets+1);
+                //Tweet has a photo, download it asynchronously
+                String user = tweet.getJSONObject("user").getString("name");
+                String name = "Tweet from " + user;
+                //Use tweet body as description
+                String description = tweet.getString("text");
+                URL url = new URL(urlstr);
+                Flotsam.ImageUpdateListener listener = new Flotsam.ImageUpdateListener() {
+                    @Override
+                    public void onImageUpdate(Flotsam flotsam) {
+                        parent.endDLThread();
+                        flotsam.removeImageUpdateListener(this);
+                    }
+                };
+                Flotsam res = new Flotsam(url, name, description, listener, false);
+                res.setWeight(weight);
+                publishProgress(res);
             }
         }
     }

@@ -4,8 +4,10 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.sigma.photostream.EditStreamActivity;
 import org.sigma.photostream.MainActivity;
 import org.sigma.photostream.R;
+import org.sigma.photostream.data.DatabaseManager;
 import org.sigma.photostream.data.Savable;
 import org.sigma.photostream.util.Receiver;
 
@@ -57,6 +59,8 @@ public abstract class Stream implements Savable {
         return name;
     }
 
+
+
     /**
      * Discard all images and restart
      */
@@ -86,13 +90,18 @@ public abstract class Stream implements Savable {
      */
     public abstract List<Flotsam> toList();
 
-    public abstract View getEditView(Context context, ViewGroup parent);
+    public abstract View getEditView(EditStreamActivity activity, ViewGroup parent);
 
     protected abstract void onReceiveFlotsam(Flotsam img);
 
     protected final void receiveFlotsam(Flotsam img){
         adapter.add(img);
         onReceiveFlotsam(img);
+    }
+
+    public void saveSelf(){
+        DatabaseManager dbm = DatabaseManager.getInstance();
+        dbm.save(this);
     }
 
     public List<Flotsam> getMany(int count){
@@ -115,7 +124,7 @@ public abstract class Stream implements Savable {
 
     public void getUntilCountIs(int count){
         while(this.count() < count && this.hasMoreImages()){
-            System.out.println("Count = " + this.count() + ", goal = " + count);
+//            System.out.println("Count = " + this.count() + ", goal = " + count);
             next();
         }
     }

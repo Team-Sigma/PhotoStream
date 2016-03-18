@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:title="@string/drawer_streams">
+    <item
+        android:id="@+id/nav_settings"
+        android:title="@string/drawer_settings_title" />
+
+    <item
+        android:title="@string/drawer_streams">
         <menu
             android:id="@+id/drawer_stream_select">
             <item
@@ -10,9 +15,5 @@
                 android:title="@string/drawer_add_stream" />
         </menu>
     </item>
-
-    <item
-        android:id="@+id/nav_settings"
-        android:title="@string/drawer_settings_title" />
 
 </menu>

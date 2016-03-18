@@ -4,154 +4,292 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:scrollIndicators="right"
-              style="@style/AppTheme">
+              style="@style/AppTheme"
+              android:theme="@style/AppTheme">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="General"
-        android:id="@+id/lblGeneral"/>
+        android:text="@string/cat_general"
+        android:id="@+id/lblGeneral"
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
-    <LinearLayout
-        android:orientation="horizontal"
+    <EditText
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:id="@+id/txtStreamName"
+        android:hint="@string/stream_name"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Batch Size"
-            android:id="@+id/lblBatchSize"/>
-
-        <EditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="number"
-            android:ems="10"
-            android:id="@+id/numTweetBatchSize"
-            android:editable="true"
-            android:enabled="true"
-            android:numeric="integer"/>
-    </LinearLayout>
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:ems="10"
+        android:id="@+id/numTweetBatchSize"
+        android:editable="true"
+        android:enabled="true"
+        android:numeric="integer"
+        android:hint="@string/set_batch_size"
+        android:elegantTextHeight="true"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <CheckBox
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Enable Geocode"
+        android:text="@string/set_do_geocode"
         android:id="@+id/chkDoGeocode"
-        android:enabled="true"/>
+        android:enabled="true"
+        android:elegantTextHeight="true"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
-    <LinearLayout
-        android:orientation="horizontal"
+    <EditText
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Radius"
-            android:id="@+id/lblGeocodeRadius"/>
-
-        <EditText
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:inputType="number"
-            android:ems="10"
-            android:id="@+id/numRadius"
-            android:numeric="integer"/>
-    </LinearLayout>
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:ems="10"
+        android:id="@+id/numRadius"
+        android:numeric="integer"
+        android:hint="@string/set_search_radius"
+        android:editable="true"
+        android:elegantTextHeight="true"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Query"
-        android:id="@+id/textView2"/>
+        android:text="@string/cat_query"
+        android:id="@+id/lblQuery"
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/lbl_preview"
+        android:id="@+id/lblPreview"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Preview"
-            android:id="@+id/lblPreview"/>
+    <EditText
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtFromUser"
+        android:editable="true"
+        android:elegantTextHeight="true"
+        android:hint="@string/from_user"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
-    </LinearLayout>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="From User"
-            android:id="@+id/lblFromUser"/>
-
-        <EditText
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/txtFromUser"/>
-    </LinearLayout>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="From List"
-            android:id="@+id/lblFromList"/>
-
-        <EditText
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/txtFromList"
-            android:layout_weight="1"/>
-    </LinearLayout>
+    <EditText
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtFromList"
+        android:editable="true"
+        android:elegantTextHeight="true"
+        android:hint="@string/from_list"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <CheckBox
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Question"
-        android:id="@+id/chkQuestion"/>
+        android:text="@string/question"
+        android:id="@+id/chkQuestion"
+        android:elegantTextHeight="true"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Since Date:"
-        android:id="@+id/lblSinceDate"/>
+        android:text="@string/lbl_since_date"
+        android:id="@+id/lblSinceDate"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
-    <DatePicker
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/datSinceDate"
-        android:datePickerMode="spinner"/>
+        android:theme="@style/AppTheme">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Until Date:"
-        android:id="@+id/lblUntilDate"/>
-
-    <DatePicker
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/datUntilDate"
-        android:datePickerMode="spinner">
-
-        <DatePicker
+        <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/datePicker"
-            android:datePickerMode="spinner"/>
-    </DatePicker>
+            android:text="@string/enable"
+            android:id="@+id/chkEnableSinceDate"
+            android:theme="@style/AppTheme"
+            android:textColor="#000000"
+            android:textColorHint="#444444"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:id="@+id/lblSinceDatePre"
+            android:visibility="gone"
+            android:theme="@style/AppTheme"
+            android:textColor="#000000"
+            android:textColorHint="#444444"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/change"
+            android:id="@+id/btnSinceDateChange"
+            android:visibility="gone"
+            android:theme="@style/AppTheme"
+            android:textColor="#000000"
+            android:textColorHint="#444444"/>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/lbl_until_date"
+        android:id="@+id/lblUntilDate"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme">
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/enable"
+            android:id="@+id/chkEnableUntilDate"
+            android:theme="@style/AppTheme"
+            android:textColor="#000000"
+            android:textColorHint="#444444"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:id="@+id/lblUntilDatePre"
+            android:visibility="gone"
+            android:theme="@style/AppTheme"
+            android:textColor="#000000"
+            android:textColorHint="#444444"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/change"
+            android:id="@+id/btnUntilDateChange"
+            android:visibility="gone"
+            android:theme="@style/AppTheme"
+            android:textColor="#000000"
+            android:textColorHint="#444444"/>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/attitude"
+        android:id="@+id/lblAttitude"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
+
+    <Spinner
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/spnAttitude"
+        android:theme="@style/AppTheme"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/exact_phrases"
+        android:id="@+id/lblExactPhrases"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btnEditExactPhrases"
+        android:text="@string/edit"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/remove"
+        android:id="@+id/lblRemove"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btnEditRemove"
+        android:text="@string/edit"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/hashtags"
+        android:id="@+id/lblHashtags"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_marginLeft="10dp"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btnEditHashtags"
+        android:text="@string/edit"
+        android:theme="@style/AppTheme"
+        android:textColor="#000000"
+        android:textColorHint="#444444"/>
 
 </LinearLayout>

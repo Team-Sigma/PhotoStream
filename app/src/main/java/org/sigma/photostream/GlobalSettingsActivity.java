@@ -4,6 +4,7 @@ package org.sigma.photostream;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -21,6 +22,11 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 import android.support.v4.app.NavUtils;
 
+import org.sigma.photostream.data.DatabaseManager;
+import org.sigma.photostream.stream.Stream;
+import org.sigma.photostream.stream.StreamList;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -190,8 +196,27 @@ public class GlobalSettingsActivity extends AppCompatPreferenceActivity {
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
             // guidelines.
-            bindPreferenceSummaryToValue(findPreference("example_text"));
-            bindPreferenceSummaryToValue(findPreference("example_list"));
+            //bindPreferenceSummaryToValue(findPreference("example_text"));
+            //bindPreferenceSummaryToValue(findPreference("example_list"));
+            ListPreference defaultStream = (ListPreference) findPreference("default_stream");
+            bindPreferenceSummaryToValue(defaultStream);
+
+            StreamList streams = MainActivity.mainActivity.availableStreams;
+            final SharedPreferences prefs = MainActivity.mainActivity.getSharedPreferences();
+            String[] names = new String[streams.size()];
+            for(int i=0; i<names.length; i++){
+                Stream s = streams.get(i);
+                names[i] = s.getName();
+            }
+            defaultStream.setEntries(names);
+            defaultStream.setEntryValues(names);
+            defaultStream.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    prefs.edit().putString(MainActivity.PREF_DEFAULT_STREAM, (String) newValue).apply();
+                    return true;
+                }
+            });
         }
 
         @Override
@@ -252,6 +277,14 @@ public class GlobalSettingsActivity extends AppCompatPreferenceActivity {
             // updated to reflect the new value, per the Android Design
             // guidelines.
             bindPreferenceSummaryToValue(findPreference("sync_frequency"));
+            Preference nuke = findPreference("nuke_db");
+            nuke.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    DatabaseManager.getInstance().nukeDB();
+                    return true;
+                }
+            });
         }
 
         @Override
