@@ -45,7 +45,7 @@ public class FlotsamAdapter extends ArrayAdapter<Flotsam> {
                 System.out.println(String.format("FirstVisible: %d, visCount: %d, total: %d",
                         firstVisibleItem, visibleItemCount, totalItemCount));
                 boolean visible = false;
-                for (int i = 0; i < totalItemCount; i++) {
+                for (int i = 0; i < getCount(); i++) {
                     if (i == firstVisibleItem) {
                         visible = true;
                     } else if (i >= firstVisibleItem + visibleItemCount) {

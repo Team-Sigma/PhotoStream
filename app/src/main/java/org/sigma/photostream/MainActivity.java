@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity
         //DANGER!!
 
         fetchAvailableStreams();
-        Stream res;
+        Stream res = null;
         if(availableStreams.isEmpty()) {
             TwitterQuery query = new TwitterQuery();
 //            TumblrQuery query = new TumblrQuery();
@@ -158,12 +158,16 @@ public class MainActivity extends AppCompatActivity
             availableStreams.add(test);
             res = test;
         }else{
-            String defStream = getSharedPreferences().getString(PREF_DEFAULT_STREAM, null);
-            if(defStream == null){
-                res = availableStreams.get(0);
-            }else{
+            SharedPreferences prefs = getSharedPreferences();
+            String defStream = prefs.getString(PREF_DEFAULT_STREAM, null);
+            if(defStream != null){
                 res = getStreamByName(defStream);
             }
+            if(res == null){
+                res = availableStreams.get(0);
+                prefs.edit().putString(PREF_DEFAULT_STREAM, res.getName()).apply();
+            }
+            Util.debugAssert(res != null);
         }
         setCurrentStream(res);
 
@@ -216,6 +220,7 @@ public class MainActivity extends AppCompatActivity
     private void fetchAvailableStreams(){
         addAll(databaseManager.getAllTwitterStreams());
         addAll(databaseManager.getAllTumblrStreams());
+        addAll(databaseManager.getAllRedditStreams());
         //TODO add more streams here
     }
 
